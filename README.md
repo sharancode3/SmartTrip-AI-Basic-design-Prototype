@@ -116,289 +116,175 @@ Every itinerary, map marker, budget line, calendar block, checklist item, and ca
 
 SmartTrip AI follows a **layered architecture** with a clear separation between the AI reasoning layer, deterministic computation engines, a single canonical data store, and synchronized frontend projections.
 
-```
-                        SMARTTRIP AI -- SYSTEM ARCHITECTURE
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EAF2FF', 'primaryTextColor': '#0B1F3A', 'primaryBorderColor': '#3D7DFF', 'lineColor': '#3D7DFF', 'secondaryColor': '#E7F7EF', 'tertiaryColor': '#FBF1DF', 'fontSize': '13px'}}}%%
 
- +---------------------------------------------------------------------------+
- |                          PRESENTATION LAYER                               |
- |                                                                           |
- |   Desktop (Sidebar + Main + Panel)    Mobile (Bottom Nav + Hamburger)     |
- |   +---------------------------+       +------------------------------+    |
- |   | Sidebar | Main   | Panel |       | Bottom Nav  | Screen | Modal |    |
- |   | 220px   | flex   | 280px |       | 7 tabs      | full   | map   |    |
- |   +---------------------------+       +------------------------------+    |
- |                                                                           |
- |   Screens: Home | Brainstorm | Brief | Planner | Flights | Hotels |     |
- |            Activities | Budget | Calendar | Checklist | Trip Mode |      |
- |            Cart | Profile | Settings                                     |
- +------------------------------------+--------------------------------------+
-                                      |
-                                      v
- +---------------------------------------------------------------------------+
- |                          APPLICATION LAYER                                |
- |                                                                           |
- |   +------------------+   +------------------+   +------------------+     |
- |   |  Chat Renderer   |   |  Screen Router   |   |  State Manager   |     |
- |   |                  |   |                  |   |                  |     |
- |   |  - User bubbles  |   |  - 16 screens    |   |  - screen state  |     |
- |   |  - AI bubbles    |   |  - Navigation    |   |  - selected day  |     |
- |   |  - Chips/cards   |   |  - Transitions   |   |  - dark mode     |     |
- |   |  - Diff view     |   |  - Mobile/Desk   |   |  - language      |     |
- |   +------------------+   +------------------+   +------------------+     |
- |                                                                           |
- |   +------------------+   +------------------+   +------------------+     |
- |   |  Theme Engine    |   |  I18n Layer       |   |  Animation Sys   |     |
- |   |                  |   |                  |   |                  |     |
- |   |  CSS variables   |   |  6 languages     |   |  page-in         |     |
- |   |  Light/Dark      |   |  30+ labels      |   |  fade-up         |     |
- |   |  300ms transition|   |  instant switch  |   |  stagger         |     |
- |   +------------------+   +------------------+   +------------------+     |
- +------------------------------------+--------------------------------------+
-                                      |
-                                      v
- +---------------------------------------------------------------------------+
- |                        CANONICAL TRIP STATE                               |
- |                                                                           |
- |   The single source of truth for the entire application.                 |
- |   Every screen reads from and projects this state.                       |
- |   No screen maintains independent trip data.                             |
- |                                                                           |
- |   +------------------------------------------------------------------+   |
- |   |  TRIP                                                            |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |  |  itineraries (versioned)                                    |  |   |
- |   |  |  - trip_id, version, is_active, generated_by               |  |   |
- |   |  |  - total_cost, currency, total_duration_minutes            |  |   |
- |   |  |  - optimizer_weights, status, timestamps                   |  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |                                                                  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |  |  itinerary_items (atomic schedule objects)                  |  |   |
- |   |  |  - item_id, itinerary_id, day_index, sort_order            |  |   |
- |   |  |  - starts_at, ends_at, item_type, entity_type, entity_id   |  |   |
- |   |  |  - title, cost, currency, duration_minutes                 |  |   |
- |   |  |  - source, explanation, locked, status                     |  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |                                                                  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |  |  Referenced Inventory                                       |  |   |
- |   |  |  - flights / flight_fares                                   |  |   |
- |   |  |  - hotels                                                   |  |   |
- |   |  |  - activities_poi                                           |  |   |
- |   |  |  - events_festivals                                         |  |   |
- |   |  |  - poi_travel_matrix (6,418 inter-POI edges)               |  |   |
- |   |  |  - place_kb (1,200 RAG knowledge chunks)                   |  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |                                                                  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   |  |  Application State                                          |  |   |
- |   |  |  - budget_state (planned vs current vs variance)           |  |   |
- |   |  |  - checklist (before/during/after trip)                    |  |   |
- |   |  |  - trip_expenses (planned vs actual)                       |  |   |
- |   |  |  - booking_cart (bookable items grouped by type)           |  |   |
- |   |  |  - version_history (all previous itinerary versions)       |  |   |
- |   |  +------------------------------------------------------------+  |   |
- |   +------------------------------------------------------------------+   |
- +------------------------------------+--------------------------------------+
-                                      |
-           +--------------------------+--------------------------+
-           |                          |                          |
-           v                          v                          v
- +------------------+   +------------------+   +------------------+
- |   PROJECTIONS    |   |   PROJECTIONS    |   |   PROJECTIONS    |
- |                  |   |                  |   |                  |
- |  Itinerary       |   |  Budget          |   |  Calendar        |
- |  Timeline        |   |  Center          |   |  (Month/Week/Day)|
- |                  |   |                  |   |                  |
- |  Map View        |   |  Cart            |   |  Checklist       |
- |  (markers +      |   |  (grouped by     |   |  (AI-powered     |
- |   routes)        |   |   type)          |   |   checkboxes)    |
- |                  |   |                  |   |                  |
- |  Trip Mode       |   |  Planned vs      |   |  Trip Pack       |
- |  (operational)   |   |  Actual          |   |  (document)      |
- |                  |   |  (ledger)        |   |                  |
- +------------------+   +------------------+   +------------------+
+flowchart TB
+    subgraph L4["4. PRESENTATION LAYER"]
+        direction LR
+        subgraph DESKTOP["Desktop"]
+            D1["Sidebar 220px"]
+            D2["Main Content"]
+            D3["Context Panel 280px"]
+        end
+        subgraph MOBILE["Mobile"]
+            M1["Bottom Nav 7 tabs"]
+            M2["Full Screen"]
+            M3["Map Modal"]
+        end
+        S1["Home"]
+        S2["Brainstorm"]
+        S3["Planner"]
+        S4["Flights"]
+        S5["Hotels"]
+        S6["Activities"]
+        S7["Budget"]
+        S8["Calendar"]
+        S9["Checklist"]
+        S10["Trip Mode"]
+        S11["Cart"]
+        S12["Profile"]
+        S13["Settings"]
+    end
+
+    subgraph L3["3. APPLICATION LAYER"]
+        direction LR
+        A1["Chat Renderer<br/>User + AI bubbles<br/>Chips, cards, diff view"]
+        A2["Screen Router<br/>16 screens<br/>Navigation, transitions"]
+        A3["State Manager<br/>Screen, day, theme, lang"]
+        A4["Theme Engine<br/>CSS variables<br/>Light / Dark 300ms"]
+        A5["I18n Layer<br/>6 languages<br/>30+ labels"]
+        A6["Animation System<br/>Page-in, fade-up, stagger"]
+    end
+
+    subgraph L2["2. CANONICAL TRIP STATE"]
+        direction TB
+        T1["itineraries versioned<br/>trip_id, version, is_active, total_cost"]
+        T2["itinerary_items atomic<br/>day_index, time, type, cost, source, explanation"]
+        T3["Referenced Inventory<br/>flights, hotels, POIs, events, travel edges, KB"]
+        T4["Application State<br/>budget, checklist, expenses, cart, version history"]
+    end
+
+    subgraph L1["1. ORGANIZER DATA LAYER"]
+        direction LR
+        O1["18 Tables<br/>32,627+ rows"]
+        O2["60 Cities<br/>900 POIs<br/>300 Hotels"]
+        O3["4,000 Flights<br/>8,002 Fares"]
+        O4["6,418 Travel Edges<br/>1,200 RAG Chunks"]
+    end
+
+    subgraph PROJ["FRONTEND PROJECTIONS"]
+        direction LR
+        P1["Itinerary Timeline"]
+        P2["Interactive Map"]
+        P3["Budget Center"]
+        P4["Calendar"]
+        P5["Checklist"]
+        P6["Booking Cart"]
+        P7["Trip Mode"]
+        P8["Planned vs Actual"]
+    end
+
+    L4 --> L3
+    L3 --> L2
+    L2 --> L1
+    L2 --> PROJ
+
+    style L4 fill:#EAF2FF,stroke:#3D7DFF,stroke-width:2px,color:#0B1F3A
+    style L3 fill:#F0F0FF,stroke:#6B5CE7,stroke-width:2px,color:#0B1F3A
+    style L2 fill:#E7F7EF,stroke:#1F9D6B,stroke-width:2px,color:#0B1F3A
+    style L1 fill:#FBF1DF,stroke:#C98A1E,stroke-width:2px,color:#0B1F3A
+    style PROJ fill:#FFF5F5,stroke:#D64545,stroke-width:2px,color:#0B1F3A
 ```
 
 ### The Canonical State Rule
 
-```
-One Trip State  -->  rendered as  -->
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#E7F7EF', 'primaryBorderColor': '#1F9D6B'}}}%%
 
-    Itinerary timeline
-    Map markers + routes
-    Budget breakdown
-    Calendar blocks
-    Checklist items
-    Booking cart
-    Trip mode view
-    Document / trip pack
+flowchart LR
+    TS["Canonical<br/>Trip State"]
 
-All are projections. None are independent.
+    TS --> IT["Itinerary Timeline"]
+    TS --> MP["Map Markers + Routes"]
+    TS --> BD["Budget Breakdown"]
+    TS --> CL["Calendar Blocks"]
+    TS --> CK["Checklist Items"]
+    TS --> CR["Booking Cart"]
+    TS --> TM["Trip Mode View"]
+    TS --> DC["Document / Trip Pack"]
+
+    IT -.-> |"modified via AI chat"| TS
+    MP -.-> |"modified via drag"| TS
+    CK -.-> |"modified via checkbox"| TS
+
+    style TS fill:#1F9D6B,stroke:#0B1F3A,stroke-width:3px,color:#FFFFFF
+    style IT fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style MP fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style BD fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style CL fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style CK fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style CR fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style TM fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style DC fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
 ```
 
 When any projection is modified through the AI chat or UI, the mutation flows back into the canonical Trip State, and all other projections re-render from the updated state.
 
 ### Conversational Edit Loop (The Core Engine)
 
-Every conversational edit — from "Make Day 2 cheaper" to "Add a beach afternoon" — follows this exact pipeline:
+Every conversational edit -- from "Make Day 2 cheaper" to "Add a beach afternoon" -- follows this exact pipeline:
 
-```
- +---------------------+
- |   USER INPUT        |
- |                     |
- |   "Make Day 2       |
- |    cheaper"         |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   INTENT EXTRACTION |
- |                     |
- |   Target: Day 2     |
- |   Objective:        |
- |     Reduce cost     |
- |   Preserve:         |
- |     - Relaxed pace  |
- |     - Backwater     |
- |       interest      |
- |   Constraints:      |
- |     - No locked     |
- |       items touched |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   STATE READ        |
- |                     |
- |   Read current      |
- |   Day 2 items       |
- |   Identify:         |
- |   - Replaceable     |
- |   - Locked          |
- |   - High-cost       |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   CANDIDATE RETRIEVAL|
- |                     |
- |   Query organizer   |
- |   data for          |
- |   cheaper           |
- |   alternatives      |
- |   matching          |
- |   constraints       |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   SIMULATION        |
- |                     |
- |   Build candidate   |
- |   replacement       |
- |   Calculate new:    |
- |   - Time slots      |
- |   - Travel segments |
- |   - Day total       |
- |   - Trip total      |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   VALIDATION        |
- |                     |
- |   Check:            |
- |   - Operating hours |
- |   - No overlaps     |
- |   - Transfer time   |
- |   - Budget          |
- |   - Locked items    |
- |   - Trip dates      |
- +----------+----------+
-            |
-     +------+------+
-     |             |
-     v             v
- +--------+   +--------+
- |  PASS  |   |  FAIL  |
- |        |   |        |
- | Commit |   | Repair |
- | to     |   | Loop   |
- | diff   |   |        |
- +---+----+   +---+----+
-     |             |
-     |             +---> Retrieve alternate candidates
-     |                   Recalculate
-     |                   Validate again
-     |                   (max 3 iterations)
-     |
-     v
- +---------------------+
- |   USER REVIEW       |
- |                     |
- |   Show diff:        |
- |   - Removed items   |
- |   - Added items     |
- |   - Budget delta    |
- |   - Impact panel    |
- |                     |
- |   [Apply] [Cancel]  |
- +----------+----------+
-            |
-            v
- +---------------------+
- |   STATE COMMIT      |
- |                     |
- |   Create version    |
- |   N+1               |
- |                     |
- |   Update canonical  |
- |   trip state        |
- |                     |
- |   Trigger re-render |
- |   of all projections|
- +---------------------+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EAF2FF', 'primaryBorderColor': '#3D7DFF', 'primaryTextColor': '#0B1F3A', 'lineColor': '#3D7DFF', 'secondaryColor': '#E7F7EF', 'tertiaryColor': '#FBF1DF'}}}%%
+
+flowchart TD
+    U["User Input<br/>Make Day 2 cheaper"] --> IE["Intent Extraction<br/>Target: Day 2 | Objective: Reduce cost<br/>Preserve: Relaxed pace, backwater interest"]
+    IE --> SR["State Read<br/>Read current Day 2 items<br/>Identify replaceable, locked, high-cost"]
+    SR --> CR["Candidate Retrieval<br/>Query organizer data for<br/>cheaper alternatives"]
+    CR --> SIM["Simulation<br/>Build candidate replacement<br/>Calculate time, travel, day total, trip total"]
+    SIM --> VAL["Validation<br/>Operating hours | Overlaps | Transfer time<br/>Budget | Locked items | Trip dates"]
+
+    VAL -->|PASS| DIFF["Generate Diff<br/>Removed items | Added items<br/>Budget delta | Impact panel"]
+    VAL -->|FAIL| REPAIR["Repair Loop<br/>Retrieve alternate candidates<br/>Recalculate | Validate again<br/>max 3 iterations"]
+    REPAIR --> VAL
+
+    DIFF --> REV["User Review<br/>[Apply] [Cancel]"]
+    REV -->|Apply| COMMIT["State Commit<br/>Create version N+1<br/>Update canonical trip state<br/>Trigger re-render of all projections"]
+    REV -->|Cancel| NOOP["No change made"]
+
+    style U fill:#3D7DFF,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
+    style IE fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style SR fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style CR fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style SIM fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style VAL fill:#F0F0FF,stroke:#6B5CE7,color:#0B1F3A
+    style REPAIR fill:#FBE9E9,stroke:#D64545,color:#0B1F3A
+    style DIFF fill:#E7F7EF,stroke:#1F9D6B,color:#0B1F3A
+    style REV fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style COMMIT fill:#1F9D6B,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
+    style NOOP fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
 ```
 
 ### Data Grounding Hierarchy
 
 SmartTrip enforces a strict data sourcing hierarchy. Every fact that reaches the UI is tagged with its source level:
 
-```
-  +-------------------------------------------------------------------+
-  |                    DATA GROUNDING PYRAMID                          |
-  +-------------------------------------------------------------------+
-  |                                                                   |
-  |   LEVEL 4 -- General Model Knowledge (fallback only)              |
-  |   +-----------------------------------------------------------+  |
-  |   |  Used when no organizer data or RAG chunk exists.          |  |
-  |   |  Never represented as organizer-supplied fact.             |  |
-  |   +-----------------------------------------------------------+  |
-  |                                                                   |
-  |   LEVEL 3 -- Controlled Live Retrieval                            |
-  |   +-----------------------------------------------------------+  |
-  |   |  Only when a real external API is actually connected.      |  |
-  |   |  Supplements but never silently overwrites curated data.   |  |
-  |   +-----------------------------------------------------------+  |
-  |                                                                   |
-  |   LEVEL 2 -- Organizer RAG Knowledge Base                         |
-  |   +-----------------------------------------------------------+  |
-  |   |  1,200 knowledge chunks covering:                          |  |
-  |   |  Culture, food, etiquette, transport, safety,              |  |
-  |   |  seasonal guidance, practical tips, history.               |  |
-  |   +-----------------------------------------------------------+  |
-  |                                                                   |
-  |   LEVEL 1 -- Structured Organizer Data (highest priority)         |
-  |   +-----------------------------------------------------------+  |
-  |   |  18 tables, 32,627+ rows:                                  |  |
-  |   |  IDs, prices, durations, times, locations,                 |  |
-  |   |  inventory, status, dates, structured attributes.          |  |
-  |   |                                                            |  |
-  |   |  This is the ground truth.                                  |  |
-  |   +-----------------------------------------------------------+  |
-  |                                                                   |
-  +-------------------------------------------------------------------+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#E7F7EF', 'primaryBorderColor': '#1F9D6B'}}}%%
+
+flowchart TB
+    L4["Level 4 -- General Model Knowledge<br/>Fallback only. Never represented<br/>as organizer-supplied fact."]
+    L3["Level 3 -- Controlled Live Retrieval<br/>Only when real external API connected.<br/>Supplements, never overwrites curated data."]
+    L2["Level 2 -- Organizer RAG Knowledge Base<br/>1,200 chunks: culture, food, etiquette,<br/>transport, safety, seasonal, practical, history"]
+    L1["Level 1 -- Structured Organizer Data<br/>HIGHEST PRIORITY<br/>18 tables, 32,627+ rows<br/>IDs, prices, durations, times, locations, inventory"]
+
+    L4 --> L3 --> L2 --> L1
+
+    style L4 fill:#FBF1DF,stroke:#C98A1E,stroke-width:2px,color:#0B1F3A
+    style L3 fill:#FBF1DF,stroke:#C98A1E,stroke-width:2px,color:#0B1F3A
+    style L2 fill:#EAF2FF,stroke:#3D7DFF,stroke-width:2px,color:#0B1F3A
+    style L1 fill:#E7F7EF,stroke:#1F9D6B,stroke-width:3px,color:#0B1F3A
 ```
 
 Each data point in the UI is tagged with a source badge:
@@ -413,114 +299,88 @@ Each data point in the UI is tagged with a source badge:
 
 Every itinerary change passes through a deterministic validation pipeline before being committed:
 
-```
- +------------------------------------------------------------------+
- |                   VALIDATION PIPELINE                             |
- +------------------------------------------------------------------+
- |                                                                  |
- |  RULE                          CHECK                            |
- |  ----                          ----                             |
- |  Time ordering                 start < end for every slot        |
- |  Trip date bounds              All items within trip window      |
- |  Operating hours               Arrival/departure within POI hours|
- |  Closed days                   No POI scheduled on closed day    |
- |  Travel feasibility            prev.end + travel <= next.start   |
- |  Budget integrity              Deterministic total == item sum   |
- |  Entity integrity              Referenced entity exists, active  |
- |  Currency validity             Code valid with monetary value    |
- |  Constraint satisfaction       Interests, exclusions, pace       |
- |  Locked item preservation      Must not be silently dropped      |
- |                                                                  |
- |  If ALL pass  -->  Commit to Trip State                          |
- |  If ANY fail  -->  Conflict record --> Repair loop --> Retry     |
- |                                                                  |
- +------------------------------------------------------------------+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#F0F0FF', 'primaryBorderColor': '#6B5CE7'}}}%%
+
+flowchart LR
+    IN["Candidate<br/>Itinerary"] --> V1["Time Ordering<br/>start < end"]
+    V1 --> V2["Trip Date Bounds<br/>within window"]
+    V2 --> V3["Operating Hours<br/>within POI hours"]
+    V3 --> V4["Closed Days<br/>not on closed day"]
+    V4 --> V5["Travel Feasibility<br/>prev + travel <= next"]
+    V5 --> V6["Budget Integrity<br/>total == item sum"]
+    V6 --> V7["Entity Integrity<br/>exists, active"]
+    V7 --> V8["Currency Valid<br/>code + value"]
+    V8 --> V9["Constraints<br/>interests, pace"]
+    V9 --> V10["Locked Items<br/>not dropped"]
+    V10 --> OUT{"All Pass?"}
+    OUT -->|Yes| COMMIT["Commit to<br/>Trip State"]
+    OUT -->|No| REPAIR["Conflict Record<br/>Repair Loop<br/>Retry"]
+
+    style IN fill:#F0F0FF,stroke:#6B5CE7,color:#0B1F3A
+    style V1 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V2 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V3 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V4 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V5 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V6 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V7 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V8 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V9 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style V10 fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style COMMIT fill:#1F9D6B,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
+    style REPAIR fill:#FBE9E9,stroke:#D64545,color:#0B1F3A
 ```
 
 ### Repair Loop
 
 When validation fails, the system enters a structured repair cycle:
 
-```
- Candidate Itinerary
-        |
-        v
- +--------------+
- |  Validator   |
- +--------------+
-        |
-   PASS |-------->  Commit
-        |
-     FAIL
-        |
-        v
- +--------------+
- | Conflict     |  "Day 3: Activity overlaps with transfer by 35 min"
- | Record       |
- +--------------+
-        |
-        v
- +--------------+
- | Identify     |  Which item(s) are affected?
- | Affected     |  Can they be shifted, replaced, or removed?
- +--------------+
-        |
-        v
- +--------------+
- | Retrieve     |  Query organizer data for alternate candidates
- | Alternatives |  matching same constraints
- +--------------+
-        |
-        v
- +--------------+
- | Repair       |  Swap in alternate, recalculate
- +--------------+
-        |
-        v
- +--------------+
- | Validate     |  Run full validation again
- | Again        |  (max 3 iterations before asking user)
- +--------------+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#FBF1DF', 'primaryBorderColor': '#C98A1E'}}}%%
+
+flowchart TD
+    C["Candidate Itinerary"] --> V["Validator"]
+    V -->|PASS| OK["Commit"]
+    V -->|FAIL| CR["Conflict Record<br/>Day 3: Activity overlaps<br/>with transfer by 35 min"]
+    CR --> IA["Identify Affected<br/>Which items? Can they be<br/>shifted, replaced, removed?"]
+    IA --> RA["Retrieve Alternatives<br/>Query organizer data<br/>matching same constraints"]
+    RA --> R["Repair<br/>Swap in alternate<br/>Recalculate"]
+    R --> V
+
+    style C fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style V fill:#F0F0FF,stroke:#6B5CE7,color:#0B1F3A
+    style OK fill:#1F9D6B,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
+    style CR fill:#FBE9E9,stroke:#D64545,color:#0B1F3A
+    style IA fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style RA fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style R fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
 ```
 
 ### Recommendation Algorithm
 
 For every recommendation SmartTrip makes (flights, hotels, activities, restaurants):
 
-```
- User Need
-    |
-    v
- Relevant Destination / Context
-    |
-    v
- Structured Candidate Retrieval
-    |  Query organizer tables with filters
-    v
- Hard Filtering
-    |  - Exclude inactive/invalid entities
-    |  - Exclude out-of-season items
-    |  - Exclude closed-day conflicts
-    |  - Exclude out-of-budget items
-    v
- Soft Scoring
-    |  - Category/tag fit (0-100)
-    |  - Duration fit to available slot
-    |  - Season appropriateness
-    |  - Cost vs budget position
-    |  - Popularity score
-    |  - Value score
-    |  - Transfer time from previous item
-    |  - Accessibility match
-    v
- Candidate Ranking
-    |  Weighted score = sum of soft factors
-    |  Top N candidates presented
-    v
- Grounded Explanation
-    |  Why this specific item was selected
-    v
- User Selection
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EAF2FF', 'primaryBorderColor': '#3D7DFF'}}}%%
+
+flowchart TD
+    UN["User Need"] --> DC["Destination / Context"]
+    DC --> CR["Structured Candidate Retrieval<br/>Query organizer tables with filters"]
+    CR --> HF["Hard Filtering<br/>Exclude inactive, out-of-season,<br/>closed-day, out-of-budget"]
+    HF --> SS["Soft Scoring<br/>Category fit | Duration fit | Season<br/>Cost | Popularity | Value<br/>Transfer time | Accessibility"]
+    SS --> RK["Candidate Ranking<br/>Weighted score = sum of soft factors<br/>Top N candidates presented"]
+    RK --> GE["Grounded Explanation<br/>Why this specific item<br/>was selected"]
+    GE --> US["User Selection"]
+
+    style UN fill:#3D7DFF,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
+    style DC fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style CR fill:#EAF2FF,stroke:#3D7DFF,color:#0B1F3A
+    style HF fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style SS fill:#FBF1DF,stroke:#C98A1E,color:#0B1F3A
+    style RK fill:#F0F0FF,stroke:#6B5CE7,color:#0B1F3A
+    style GE fill:#E7F7EF,stroke:#1F9D6B,color:#0B1F3A
+    style US fill:#1F9D6B,stroke:#0B1F3A,stroke-width:2px,color:#FFFFFF
 ```
 
 ### Conversational Command Mapping
