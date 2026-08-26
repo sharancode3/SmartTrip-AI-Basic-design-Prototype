@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartTrip AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{bg:'#FAFBFC',surface:'#FFFFFF',navy:{900:'#0B1F3A',700:'#16305A',500:'#3A5578'},accent:{DEFAULT:'#3D7DFF',soft:'#EAF2FF','100':'#D6E6FF'},line:'#E6E9EF',success:{DEFAULT:'#1F9D6B',soft:'#E7F7EF'},warning:{DEFAULT:'#C98A1E',soft:'#FBF1DF'},error:{DEFAULT:'#D64545',soft:'#FBE9E9'},gold:'#B8894A'},fontFamily:{sans:['Inter','system-ui','sans-serif']},borderRadius:{card:'14px'},boxShadow:{card:'0 1px 3px rgba(11,31,58,0.04)',hover:'0 8px 24px rgba(11,31,58,0.08)',elevated:'0 12px 40px rgba(11,31,58,0.10)'}}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+#app{height:100vh}
+:root{--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;--card-pad:24px;--radius:14px;
+--bg:#FAFBFC;--surface:#FFFFFF;--tx:#0B1F3A;--tx2:#16305A;--tx3:#3A5578;--line:#E6E9EF;--accent:#3D7DFF;--accentSoft:#EAF2FF;--accent100:#D6E6FF;
+--success:#1F9D6B;--successSoft:#E7F7EF;--warning:#C98A1E;--warningSoft:#FBF1DF;--error:#D64545;--errorSoft:#FBE9E9;--gold:#B8894A;
+--cardBg:#FFFFFF;--cardShadow:0 1px 3px rgba(11,31,58,0.04);--cardBorder:#E6E9EF;--hoverBg:rgba(0,0,0,0.03)}
+html.dark{--bg:#0F1923;--surface:#1A2736;--tx:#E8EDF3;--tx2:#B0BEC9;--tx3:#7A8FA0;--line:#2A3A4A;--accent:#5B9BFF;--accentSoft:rgba(91,155,255,0.12);--accent100:rgba(91,155,255,0.25);
+--success:#2ECC71;--successSoft:rgba(46,204,113,0.12);--warning:#E6A817;--warningSoft:rgba(230,168,23,0.12);--error:#FF6B6B;--errorSoft:rgba(255,107,107,0.12);
+--cardBg:#1A2736;--cardShadow:0 1px 3px rgba(0,0,0,0.2);--cardBorder:#2A3A4A;--hoverBg:rgba(255,255,255,0.04)}
+@media(max-width:640px){:root{--card-pad:16px}}
+.card{background:var(--cardBg);border:1px solid var(--cardBorder);border-radius:var(--radius);box-shadow:var(--cardShadow);transition:box-shadow .2s,transform .2s,border-color .2s}
+.card:hover{box-shadow:0 8px 24px rgba(11,31,58,0.08);transform:translateY(-1px)}
+html.dark .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.card:active{transform:scale(0.985)}
+.tl-spine{position:absolute;left:19px;top:40px;bottom:0;width:2px;background:var(--line)}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);position:absolute;left:15px;top:6px;z-index:1}
+.tl-dot.done{background:var(--success);border-color:var(--success)}
+.tl-dot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(61,125,255,0.15)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pageIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .3s ease-out both}
+.anim-d1{animation-delay:.04s}.anim-d2{animation-delay:.08s}.anim-d3{animation-delay:.12s}
+.page-enter{animation:pageIn .25s ease-out both}
+.typing-dot{width:5px;height:5px;border-radius:50%;background:var(--tx);display:inline-block;margin:0 2px}
+.typing-dot:nth-child(1){animation:tp 1.4s ease-in-out 0s infinite}
+.typing-dot:nth-child(2){animation:tp 1.4s ease-in-out .2s infinite}
+.typing-dot:nth-child(3){animation:tp 1.4s ease-in-out .4s infinite}
+@keyframes tp{0%,80%,100%{transform:scale(.5);opacity:.3}40%{transform:scale(1);opacity:1}}
+.budget-num{transition:all .6s cubic-bezier(.4,0,.2,1)}
+.map-bg{background:linear-gradient(135deg,#E8EFF8 0%,#D4E4D0 30%,#C8D8E8 70%,#E0E8D8 100%);position:relative;overflow:hidden}
+html.dark .map-bg{background:linear-gradient(135deg,#1A2736 0%,#1E3328 30%,#1A2A3A 70%,#1E2E28 100%)}
+.nav-active{background:var(--accentSoft)!important;color:var(--accent)!important;font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:var(--s1);font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;letter-spacing:.03em;text-transform:uppercase}
+.badge-v{background:var(--successSoft);color:var(--success)}
+.badge-e{background:var(--warningSoft);color:var(--warning)}
+.badge-l{background:var(--accentSoft);color:var(--accent)}
+.badge-h{background:var(--successSoft);color:var(--success);font-size:11px;padding:4px 10px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--accent100);border-radius:2px}
+@media(max-width:1024px){.desk-only{display:none!important}.page-pad{padding-bottom:80px!important}.cl-chat-panel{display:none!important}.mob-chat-bar{position:fixed!important;bottom:56px!important;left:0;right:0;z-index:39;border-top:1px solid var(--line);background:var(--surface);padding:8px 16px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}.mob-chat-bar+*{padding-bottom:120px!important}}
+@media(min-width:1025px){.mob-nav{display:none!important}.cl-chat-panel{display:flex!important}.mob-overlay{display:none!important}.mob-map-modal{display:none!important}}
+.mob-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-around;padding:4px 0;z-index:40;height:56px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
+.mob-nav button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 6px;min-width:44px;min-height:44px;font-size:9px;color:var(--tx3);border:none;background:none;flex:1}
+.mob-nav button.active{color:var(--accent);font-weight:600}
+.mob-overlay{position:fixed;inset:0;background:rgba(11,31,58,.4);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s ease-out}
+html.dark .mob-overlay{background:rgba(0,0,0,.6)}
+.mob-overlay.open{opacity:1;pointer-events:auto}
+.mob-sidebar{position:fixed;top:0;left:0;width:260px;height:100%;background:var(--surface);z-index:51;transform:translateX(-100%);transition:transform .25s ease-out;overflow-y:auto;display:flex;flex-direction:column}
+.mob-overlay.open .mob-sidebar{transform:translateX(0)}
+.mob-sidebar .close-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;border-radius:8px;cursor:pointer}
+.mob-sidebar .close-btn:hover{background:var(--hoverBg)}
+.chat-bar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:8px 16px;z-index:10}
+@media(max-width:1024px){.chat-bar{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
+/* Mobile map modal */
+.mob-map-modal{position:fixed;inset:0;z-index:55;background:var(--surface);transform:translateY(100%);transition:transform .3s ease-out;overflow-y:auto}
+.mob-map-modal.open{transform:translateY(0)}
+/* Diff view */
+.diff-removed{background:var(--errorSoft);border:1px solid rgba(214,69,69,0.2);border-radius:10px;padding:8px 12px;text-decoration:line-through;opacity:.6}
+.diff-added{background:var(--successSoft);border:1px solid rgba(31,157,107,0.2);border-radius:10px;padding:8px 12px}
+.diff-budget{font-size:14px;font-weight:700;color:var(--accent);transition:all .6s cubic-bezier(.4,0,.2,1)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const TRIP={name:'Kerala Escape',dest:'Kerala',dates:{start:'2026-12-15',end:'2026-12-20'},travellers:2,budget:45000,pace:'Relaxed',interests:['Backwaters','Food','Nature','Culture'],used:39680,remaining:5320};
+const FLIGHTS=[
+  {id:1,air:'IndiGo',no:'6E-2043',from:'DEL',to:'COK',dep:'09:20',arr:'12:15',dur:'2h 55m',stops:0,cabin:'Economy',fare:7400,tax:580,bag:'15 kg',ref:false,co2:'142 kg',st:'verified'},
+  {id:2,air:'Air India',no:'AI-883',from:'DEL',to:'COK',dep:'06:00',arr:'09:10',dur:'3h 10m',stops:0,cabin:'Economy',fare:8200,tax:620,bag:'23 kg',ref:true,co2:'156 kg',st:'verified'},
+  {id:3,air:'SpiceJet',no:'SG-471',from:'DEL',to:'COK',dep:'14:30',arr:'17:20',dur:'2h 50m',stops:0,cabin:'Economy',fare:6800,tax:520,bag:'10 kg',ref:false,co2:'138 kg',st:'estimated'},
+  {id:4,air:'IndiGo',no:'6E-537',from:'COK',to:'DEL',dep:'18:00',arr:'21:00',dur:'3h 00m',stops:0,cabin:'Economy',fare:7800,tax:600,bag:'15 kg',ref:false,co2:'142 kg',st:'verified'},
+];
+const HOTELS=[
+  {id:1,name:'Fort Heritage',type:'Heritage',stars:4,score:8.7,rev:342,loc:'Fort Kochi',price:4200,desc:'Boutique heritage hotel in a restored Portuguese mansion',st:'verified'},
+  {id:2,name:'Lake & Lagoon Resort',type:'Resort',stars:4,score:8.9,rev:218,loc:'Alleppey',price:5800,desc:'Waterfront resort with direct backwater access',st:'verified'},
+  {id:3,name:'Tea Valley Hotel',type:'Hotel',stars:3,score:8.2,rev:189,loc:'Munnar',price:3200,desc:'Mid-range hotel with plantation views',st:'verified'},
+];
+const ITINERARY=[
+  {day:1,date:'15 Dec',city:'Kochi',title:'Arrival & Fort Kochi',total:12200,items:[
+    {t:'09:20',e:'12:15',n:'DEL to COK',tp:'flight',c:7400,d:'2h 55m',why:'Direct morning flight from Delhi, arriving by noon.',locked:true,st:'verified'},
+    {t:'12:30',e:'13:15',n:'Airport to hotel',tp:'transfer',c:250,d:'45 min',why:'Most efficient route to Fort Kochi.',st:'verified'},
+    {t:'14:00',n:'Fort Heritage check-in',tp:'hotel',c:4200,why:'Within your mid-range budget. Walking distance to activities.',locked:true,st:'verified'},
+    {t:'15:30',e:'17:30',n:'Fort Kochi heritage walk',tp:'activity',c:0,d:'2h',cat:'Culture',why:'Colonial streets, art galleries, Chinese fishing nets.',st:'verified'},
+    {t:'17:45',e:'18:30',n:'Chinese fishing nets sunset',tp:'activity',c:0,d:'45 min',cat:'Nature',why:'Golden hour at the iconic nets.',st:'verified'},
+    {t:'19:00',e:'21:00',n:'Kathakali performance',tp:'activity',c:350,d:'2h',cat:'Culture',why:'Traditional dance-drama with pre-show makeup.',st:'verified'},
+  ]},
+  {day:2,date:'16 Dec',city:'Kochi to Alleppey',title:'Backwater Journey',total:7650,items:[
+    {t:'08:30',e:'09:30',n:'Kashi Art Cafe breakfast',tp:'activity',c:400,d:'1h',cat:'Food',why:'Top-rated cafe near hotel.',st:'verified'},
+    {t:'10:30',e:'12:00',n:'Cab to Alleppey',tp:'transfer',c:650,d:'1.5h',why:'55 km scenic coastal drive.',st:'verified'},
+    {t:'13:00',e:'16:00',n:'Backwater boat ride',tp:'activity',c:800,d:'3h',cat:'Nature',why:'Your top interest. Afternoon light is exceptional.',st:'verified'},
+    {t:'16:30',n:'Lake & Lagoon check-in',tp:'hotel',c:5800,why:'Waterfront resort matching your budget.',locked:true,st:'verified'},
+    {t:'18:00',e:'19:00',n:'Alleppey beach walk',tp:'activity',c:0,d:'1h',cat:'Nature',why:'Evening relaxation. Walking distance from resort.',st:'verified'},
+  ]},
+  {day:3,date:'17 Dec',city:'Alleppey',title:'Village Immersion',total:1350,items:[
+    {t:'07:30',e:'09:00',n:'Canoe through villages',tp:'activity',c:350,d:'1.5h',cat:'Nature',why:'Narrow canal paddling through village life.',st:'verified'},
+    {t:'10:00',e:'13:00',n:'Kerala cooking class',tp:'activity',c:600,d:'3h',cat:'Food',why:'Hands-on traditional cooking with a local chef.',st:'verified'},
+    {t:'14:00',e:'16:00',n:'Free time at resort',tp:'activity',c:0,d:'2h',cat:'Nature',why:'Relaxed pace means afternoon rest.',st:'verified'},
+    {t:'16:30',e:'17:15',n:'Boat to Kumarakom',tp:'transfer',c:350,d:'45 min',why:'Scenic backwater transfer.',st:'verified'},
+    {t:'17:30',e:'19:00',n:'Bird sanctuary visit',tp:'activity',c:50,d:'1.5h',cat:'Nature',why:'Migratory birds active at dusk.',st:'verified'},
+  ]},
+  {day:4,date:'18 Dec',city:'Munnar',title:'Tea Country',total:5150,items:[
+    {t:'07:00',e:'11:00',n:'Cab to Munnar',tp:'transfer',c:1800,d:'4h',why:'130 km scenic drive through Western Ghats.',st:'verified'},
+    {t:'11:30',n:'Tea Valley check-in',tp:'hotel',c:3200,why:'Mid-range with plantation views.',st:'verified'},
+    {t:'13:00',e:'15:00',n:'Tea plantation walk',tp:'activity',c:150,d:'2h',cat:'Nature',why:'Guided walk through emerald tea gardens.',st:'verified'},
+    {t:'15:30',e:'16:30',n:'Spice market visit',tp:'activity',c:0,d:'1h',cat:'Food',why:'Browse and taste fresh Kerala spices.',st:'verified'},
+    {t:'17:00',e:'18:30',n:'Top Station viewpoint',tp:'activity',c:0,d:'1.5h',cat:'Nature',why:'Panoramic sunset views of Western Ghats.',st:'verified'},
+  ]},
+  {day:5,date:'19 Dec',city:'Munnar to Delhi',title:'Departure',total:9850,items:[
+    {t:'07:00',e:'10:00',n:'Eravikulam National Park',tp:'activity',c:250,d:'3h',cat:'Nature',why:'Nilgiri Tahr sightings common in early morning.',st:'verified'},
+    {t:'10:30',e:'14:30',n:'Cab to Kochi airport',tp:'transfer',c:1800,d:'4h',why:'130 km return journey.',st:'estimated'},
+    {t:'18:00',e:'21:00',n:'COK to DEL',tp:'flight',c:7800,d:'3h',why:'Evening return flight.',locked:true,st:'verified'},
+  ]},
+];
+const BUDGET_CATS=[{n:'Flights',a:15200,ic:'plane'},{n:'Hotels',a:13200,ic:'building'},{n:'Activities',a:2350,ic:'map-pin'},{n:'Transport',a:4850,ic:'car'},{n:'Meals',a:3880,ic:'utensils'},{n:'Buffer',a:200,ic:'shield'}];
+
+// Hindi translations
+const HI={
+  'Where are you going next?':'Aap agla kahan ja rahe hain?',
+  'Tell me about your trip and I will plan every detail.':'Apne trip ke baare mein batayein, main har detail plan karunga.',
+  'Start planning':'Plan shuru karein',
+  'Continue planning':'Planning jaari rakhein',
+  'Explore destinations':'Destinations explore karein',
+  'View all':'Sab dekhein',
+  'Plan a new trip':'Naya trip plan karein',
+  'Your trip brief':'Aapka trip brief',
+  'Everything look right?':'Sab kuch sahi lag raha hai?',
+  'Confirm and build my trip':'Confirm karein aur trip banaayein',
+  'Edit':'Sudharein',
+  'Select flights':'Flight chunein',
+  'Choose your stay':'Apna stay chunein',
+  'Discover activities':'Activities khojein',
+  'Trip Budget':'Trip Budget',
+  'Your Trip Cart':'Aapka Trip Cart',
+  'Continue to booking':'Booking jaari karein',
+  'Profile':'Profile',
+  'Settings':'Settings',
+  'Checklist':'Checklist',
+  'Theme':'Theme',
+  'Light':'Light',
+  'Dark':'Dark',
+  'Home':'Ghar',
+  'Planner':'Planner',
+  'Budget':'Budget',
+  'Cart':'Cart',
+  'Search...':'Khojein...',
+  'Brainstorm':'Brainstorm',
+  'Flights':'Flights',
+  'Hotels':'Hotels',
+  'Activities':'Activities',
+  'Calendar':'Calendar',
+  'Trip Mode':'Trip Mode',
+};
+
+let scr='home',selDay=0,chatLog=[],darkMode=false,lang='en',showMapModal=false,showDiff=false;
+let checklistState=[
+  {s:'Before Trip',items:[
+    {n:'Passport and ID',done:true},{n:'Delhi to Kochi flight - IndiGo 6E-2043',done:true},
+    {n:'Fort Heritage hotel booking - Kochi (15-17 Dec)',done:true},{n:'Lake & Lagoon Resort - Alleppey (17-18 Dec)',done:false},
+    {n:'Tea Valley Hotel - Munnar (18-20 Dec)',done:false},{n:'Backwater boat ride pre-booking',done:false,ai:true},
+    {n:'Kerala cooking class registration',done:false},{n:'Pack light layers for Munnar',done:false},
+  ]},{s:'During Trip',items:[
+    {n:'Confirm airport cab pickup (15 Dec)',done:false},{n:'Kathakali performance tickets',done:false},
+    {n:'Record daily expenses',done:false},{n:'Eravikulam National Park entry (19 Dec)',done:false},
+  ]},{s:'After Trip',items:[
+    {n:'Review trip summary and actual spend',done:false},{n:'Leave feedback on hotels and activities',done:false},
+    {n:'Save travel memories',done:false},
+  ]}];
+
+function T(s){return lang==='hi'&&HI[s]?HI[s]:s}
+function fmt(n){return'\u20B9'+n.toLocaleString('en-IN')}
+function bdg(s){return s==='verified'?'<span class="badge badge-v">Verified</span>':'<span class="badge badge-e">Estimated</span>'}
+function toast(m){const t=document.createElement('div');t.className='fixed left-1/2 -translate-x-1/2 px-5 py-3 rounded-card text-sm font-medium shadow-elevated z-50 anim';t.style.cssText='bottom:100px;background:var(--tx);color:var(--surface)';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+function nav(s){scr=s;showDiff=false;render();document.getElementById('main')?.scrollTo(0,0);closeMob()}
+function closeMob(){document.getElementById('mob-menu')?.classList.remove('open')}
+function openMob(){document.getElementById('mob-menu')?.classList.add('open')}
+function toggleDark(){darkMode=!darkMode;document.documentElement.classList.toggle('dark',darkMode);render()}
+function setLang(l){lang=l;render()}
+function toggleMapModal(){showMapModal=!showMapModal;const m=document.getElementById('mapModal');if(m)m.classList.toggle('open',showMapModal)}
+
+function renderMobNav(){
+  const items=[{id:'home',ic:'home',lb:T('Home')},{id:'ideator',ic:'compass',lb:'Plan'},{id:'planner',ic:'map',lb:'Map'},{id:'budget',ic:'wallet',lb:T('Budget')},{id:'checklist',ic:'check-square',lb:'Tasks'},{id:'cart',ic:'shopping-cart',lb:T('Cart')},{id:'more',ic:'menu',lb:'More'}];
+  const chatBar=scr==='checklist'?`<div style="padding:6px 12px 0;border-top:1px solid var(--line);background:var(--surface)"><div class="flex gap-2 items-center"><div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style="background:var(--accent)"><i data-lucide="triangle" style="width:10px;height:10px;color:#fff"></i></div><div class="flex-1 flex items-center rounded-lg" style="padding:0 10px;height:38px;background:var(--hoverBg);border:1px solid var(--line)"><input type="text" placeholder="Update checklist..." class="flex-1 bg-transparent text-[11px] outline-none" style="color:var(--tx);height:36px;line-height:36px"><button style="color:var(--tx3);display:flex;align-items:center;justify-content:center;height:36px;flex-shrink:0"><i data-lucide="mic" style="width:14px;height:14px"></i></button></div><button class="text-white px-2.5 rounded-lg text-[11px] font-semibold flex-shrink-0" style="background:var(--accent);height:38px;display:flex;align-items:center;justify-content:center"><i data-lucide="send" style="width:13px;height:13px"></i></button></div></div>`:'';
+  return`<nav class="mob-nav" style="${scr==='checklist'?'height:auto;flex-direction:column':''}">${chatBar}<div style="display:flex;justify-around;width:100%;padding:4px 0">${items.map(i=>`<button onclick="${i.id==='more'?'openMob()':'nav(\''+i.id+'\')'}" class="${scr===i.id?'active':''}"><i data-lucide="${i.ic}" style="width:18px;height:18px"></i><span>${i.lb}</span></button>`).join('')}</div></nav>`;
+}
+
+function renderMobSidebar(){
+  const items=[{id:'home',ic:'home',lb:T('Home')},{id:'ideator',ic:'compass',lb:T('Brainstorm')},{id:'planner',ic:'map',lb:T('Planner')},{id:'flights',ic:'plane',lb:T('Flights')},{id:'hotels',ic:'building',lb:T('Hotels')},{id:'activities',ic:'compass',lb:T('Activities')},{id:'budget',ic:'wallet',lb:T('Budget')},{id:'calendar',ic:'calendar',lb:T('Calendar')},{id:'checklist',ic:'check-square',lb:T('Checklist')},{id:'trip-mode',ic:'navigation',lb:T('Trip Mode')},{id:'cart',ic:'shopping-cart',lb:T('Cart')}];
+  const sec=[{id:'profile',ic:'user',lb:T('Profile')},{id:'settings',ic:'settings',lb:T('Settings')}];
+  return`
+  <div class="mob-overlay" id="mob-menu" onclick="if(event.target===this)closeMob()">
+    <div class="mob-sidebar">
+      <button class="close-btn" onclick="closeMob()"><i data-lucide="x" style="width:20px;height:20px;color:var(--tx2)"></i></button>
+      <div class="flex items-center gap-3 px-5 h-14 border-b" style="border-color:var(--line)">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--accent)"><i data-lucide="triangle" style="width:16px;height:16px;color:#fff"></i></div>
+        <span class="text-base font-bold" style="color:var(--tx)">SmartTrip<span style="color:var(--accent)">AI</span></span>
+      </div>
+      <nav class="flex-1 overflow-y-auto py-3 px-2">
+        <div class="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3)">Navigation</div>
+        ${items.map(n=>`<button onclick="nav('${n.id}')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${scr===n.id?'nav-active':''}" style="color:${scr===n.id?'var(--accent)':'var(--tx2)'};min-height:44px"><i data-lucide="${n.ic}" style="width:18px;height:18px"></i><span>${n.lb}</span>${n.id==='cart'?'<span class="ml-auto text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--accent)">4</span>':''}</button>`).join('')}
+        <div class="px-3 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3)">Account</div>
+        ${sec.map(n=>`<button onclick="nav('${n.id}')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium ${scr===n.id?'nav-active':''}" style="color:${scr===n.id?'var(--accent)':'var(--tx2)'};min-height:44px"><i data-lucide="${n.ic}" style="width:18px;height:18px"></i><span>${n.lb}</span></button>`).join('')}
+      </nav>
+      <div class="p-3 border-t" style="border-color:var(--line)">
+        <div class="flex items-center gap-2.5 px-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style="background:var(--accentSoft);color:var(--accent)">PS</div>
+          <div class="min-w-0"><div class="text-[12px] font-semibold truncate" style="color:var(--tx)">Priya Sharma</div><div class="text-[10px]" style="color:var(--tx3)">Delhi</div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSidebar(){
+  const items=[{id:'home',ic:'home',lb:T('Home')},{id:'ideator',ic:'compass',lb:T('Brainstorm')},{id:'planner',ic:'map',lb:T('Planner')},{id:'flights',ic:'plane',lb:T('Flights')},{id:'hotels',ic:'building',lb:T('Hotels')},{id:'activities',ic:'compass',lb:T('Activities')},{id:'budget',ic:'wallet',lb:T('Budget')},{id:'calendar',ic:'calendar',lb:T('Calendar')},{id:'checklist',ic:'check-square',lb:T('Checklist')},{id:'trip-mode',ic:'navigation',lb:T('Trip Mode')},{id:'cart',ic:'shopping-cart',lb:T('Cart')}];
+  const sec=[{id:'profile',ic:'user',lb:T('Profile')},{id:'settings',ic:'settings',lb:T('Settings')}];
+  return`<aside class="hidden lg:flex flex-col w-[220px] h-screen flex-shrink-0" style="background:var(--surface);border-right:1px solid var(--line)">
+    <div class="flex items-center gap-3 px-5 h-14" style="border-bottom:1px solid var(--line)">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--accent)"><i data-lucide="triangle" class="w-4 h-4 text-white"></i></div>
+      <span class="text-base font-bold" style="color:var(--tx)">SmartTrip<span style="color:var(--accent)">AI</span></span>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-3 px-2">
+      <div class="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3)">Navigation</div>
+      ${items.map(n=>`<button onclick="nav('${n.id}')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${scr===n.id?'nav-active':''}" style="color:${scr===n.id?'var(--accent)':'var(--tx2)'}"><i data-lucide="${n.ic}" style="width:18px;height:18px"></i><span>${n.lb}</span>${n.id==='cart'?'<span class="ml-auto text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--accent)">4</span>':''}</button>`).join('')}
+      <div class="px-3 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3)">Account</div>
+      ${sec.map(n=>`<button onclick="nav('${n.id}')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium ${scr===n.id?'nav-active':''}" style="color:${scr===n.id?'var(--accent)':'var(--tx2)'}"><i data-lucide="${n.ic}" style="width:18px;height:18px"></i><span>${n.lb}</span></button>`).join('')}
+    </nav>
+    <div class="p-3" style="border-top:1px solid var(--line)">
+      <button onclick="toggleDark()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium mb-1" style="color:var(--tx3);min-height:36px"><i data-lucide="${darkMode?'sun':'moon'}" style="width:16px;height:16px"></i><span>${darkMode?'Light mode':'Dark mode'}</span></button>
+      <div class="flex items-center gap-2.5 px-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style="background:var(--accentSoft);color:var(--accent)">PS</div>
+        <div class="min-w-0"><div class="text-[12px] font-semibold truncate" style="color:var(--tx)">Priya Sharma</div><div class="text-[10px]" style="color:var(--tx3)">Delhi</div></div>
+      </div>
+    </div>
+  </aside>`;
+}
+
+function renderTopbar(){
+  const t={home:'Home',ideator:T('Brainstorm'),planner:T('Planner'),flights:T('Flights'),hotels:T('Hotels'),activities:T('Activities'),budget:T('Budget'),calendar:T('Calendar'),checklist:T('Checklist'),'trip-mode':T('Trip Mode'),cart:T('Cart'),profile:T('Profile'),settings:T('Settings')};
+  return`<header class="h-14 flex items-center px-4 gap-3 flex-shrink-0 z-30" style="background:var(--surface);border-bottom:1px solid var(--line)">
+    <button onclick="openMob()" class="lg:hidden p-2 rounded-lg" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--tx2)"><i data-lucide="menu" style="width:20px;height:20px"></i></button>
+    <span class="text-[14px] font-semibold" style="color:var(--tx)">${t[scr]||'Home'}</span>
+    <div class="flex-1"></div>
+    <div class="hidden sm:flex items-center rounded-lg px-3 h-9 w-48 transition-all" style="background:var(--hoverBg);border:1px solid var(--line)"><i data-lucide="search" style="width:16px;height:16px;color:var(--tx3);margin-right:8px"></i><input type="text" placeholder="${T('Search...')}" class="bg-transparent text-[13px] outline-none w-full" style="color:var(--tx)"></div>
+    <button onclick="toggleDark()" class="relative p-2 rounded-lg" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--tx3)"><i data-lucide="${darkMode?'sun':'moon'}" style="width:20px;height:20px"></i></button>
+    <button class="relative p-2 rounded-lg" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--tx3)"><i data-lucide="bell" style="width:20px;height:20px"></i><span class="absolute top-2 right-2 w-2 h-2 rounded-full" style="background:var(--error)"></span></button>
+  </header>`;
+}
+
+function chat(role,text){
+  if(role==='user')return`<div class="flex justify-end anim" style="margin-bottom:var(--s4)"><div class="rounded-2xl rounded-br-md px-4 py-2.5 text-[13px] leading-relaxed" style="max-width:80%;background:var(--accent);color:#fff">${text}</div></div>`;
+  return`<div class="flex gap-2.5 anim" style="margin-bottom:var(--s4)">
+    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--accent)"><i data-lucide="triangle" style="width:12px;height:12px;color:#fff"></i></div>
+    <div class="flex-1" style="max-width:600px">
+      <div class="text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3);margin-bottom:2px">SmartTrip AI</div>
+      <div class="rounded-2xl rounded-tl-md px-4 py-2.5 text-[13px] leading-relaxed shadow-card" style="background:var(--cardBg);border:1px solid var(--cardBorder);color:var(--tx)">${text}</div>
+    </div>
+  </div>`;
+}
+
+// ===== SCREENS =====
+
+function sHome(){
+  return`<div class="max-w-3xl mx-auto page-pad page-enter" style="padding:var(--s12) var(--s4)">
+    <div class="text-center anim" style="margin-bottom:var(--s12)">
+      <h1 class="text-3xl sm:text-4xl font-bold leading-tight" style="color:var(--tx);margin-bottom:var(--s3)">${T('Where are you going next?')}</h1>
+      <p class="text-base max-w-md mx-auto" style="color:var(--tx3);line-height:1.6">${T('Tell me about your trip and I will plan every detail.')}</p>
+    </div>
+    <div class="anim" style="max-width:560px;margin:0 auto;margin-bottom:var(--s12)">
+      <div class="flex items-end gap-2 rounded-2xl p-2 shadow-card transition-all" style="background:var(--cardBg);border:2px solid var(--accent100)">
+        <textarea id="hi" rows="1" placeholder="5 relaxed days in Kerala in December for two, mid-range budget, love food and backwaters" class="flex-1 border-none outline-none resize-none p-3 text-[15px] min-h-[48px] max-h-[120px] leading-relaxed" style="background:transparent;color:var(--tx)"></textarea>
+        <div class="flex items-center gap-1.5 flex-shrink-0 pb-1">
+          <button class="p-2.5 rounded-xl transition" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--tx3)"><i data-lucide="mic" style="width:20px;height:20px"></i></button>
+          <button onclick="nav('ideator')" class="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.97]" style="background:var(--accent);min-height:44px">${T('Start planning')}<i data-lucide="arrow-right" style="width:16px;height:16px"></i></button>
+        </div>
+      </div>
+      <div class="flex gap-2 justify-center flex-wrap" style="margin-top:var(--s3)">
+        ${['Weekend getaway','Family trip','Nature retreat','Food trip','Budget trip'].map(c=>`<button class="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all" style="min-height:32px;border:1px solid var(--line);color:var(--tx2)">${c}</button>`).join('')}
+      </div>
+    </div>
+    <div style="margin-bottom:var(--s12)">
+      <div class="flex items-center justify-between" style="margin-bottom:var(--s5)"><h2 class="text-lg font-semibold" style="color:var(--tx)">${T('Continue planning')}</h2><button class="text-[13px] font-medium" style="color:var(--accent)">${T('View all')}</button></div>
+      <div class="grid sm:grid-cols-2" style="gap:var(--s5)">
+        <div onclick="nav('planner')" class="card cursor-pointer overflow-hidden">
+          <div class="h-32 sm:h-36 relative overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&q=80" class="w-full h-full object-cover" alt="Kerala">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            <span class="absolute top-2 right-2 bg-white/80 backdrop-blur text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide" style="color:var(--accent)">Planning</span>
+          </div>
+          <div style="padding:var(--card-pad)">
+            <div class="text-[14px] font-semibold" style="color:var(--tx);margin-bottom:2px">Kerala Escape</div>
+            <div class="text-[12px]" style="color:var(--tx3);margin-bottom:var(--s3)">15-20 Dec, 2 travellers</div>
+            <div class="flex items-center justify-between" style="margin-bottom:var(--s2)"><span class="text-[12px]" style="color:var(--tx3)">Budget: ${fmt(45000)}</span><span class="text-[12px] font-semibold" style="color:var(--accent)">68%</span></div>
+            <div class="h-1.5 rounded-full overflow-hidden" style="background:var(--line)"><div class="h-full rounded-full" style="width:68%;background:var(--accent)"></div></div>
+          </div>
+        </div>
+        <div onclick="nav('ideator')" class="card cursor-pointer flex flex-col items-center justify-center border-dashed" style="min-height:220px">
+          <i data-lucide="plus" style="width:32px;height:32px;opacity:.3;margin-bottom:var(--s2);color:var(--tx3)"></i>
+          <span class="text-[13px] font-medium" style="color:var(--tx3)">${T('Plan a new trip')}</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="flex items-center justify-between" style="margin-bottom:var(--s5)"><h2 class="text-lg font-semibold" style="color:var(--tx)">${T('Explore destinations')}</h2><button class="text-[13px] font-medium" style="color:var(--accent)">${T('View all')}</button></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4" style="gap:var(--s3)">
+        ${[{n:'Kerala',t:'Backwaters & Food',img:'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&q=80'},{n:'Goa',t:'Beaches & Heritage',img:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&q=80'},{n:'Rajasthan',t:'Palaces & Desert',img:'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400&q=80'},{n:'Himachal',t:'Mountains & Valleys',img:'https://images.unsplash.com/photo-1597074866923-dc0589150e32?w=400&q=80'}].map(d=>`<div class="card cursor-pointer overflow-hidden"><div class="h-24 overflow-hidden"><img src="${d.img}" class="w-full h-full object-cover" alt="${d.n}"></div><div style="padding:var(--s3)"><div class="text-[13px] font-semibold" style="color:var(--tx)">${d.n}</div><div class="text-[11px]" style="color:var(--tx3)">${d.t}</div></div></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function sIdeator(){
+  return`<div class="flex flex-col lg:flex-row page-enter" style="height:calc(100vh - 56px)">
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="flex-1 overflow-y-auto page-pad px-4 sm:px-6" style="padding-top:var(--s4);padding-bottom:var(--s4);max-width:680px;margin:0 auto;width:100%" id="main">
+        <div class="anim" style="margin-bottom:var(--s3)"><span class="badge badge-l"><i data-lucide="compass" style="width:12px;height:12px"></i>IDEATOR - exploring options</span></div>
+        ${chat('ai','Tell me about the kind of trip you are dreaming of. No commitment yet - we are just brainstorming.')}
+        ${chat('user','5 relaxed days somewhere in South India in December for two. We love food, backwaters, and nature.')}
+        ${chat('ai','Based on your vibe - relaxed pace, food-forward, backwaters + nature - here are three destinations worth considering:')}
+        <div class="anim" style="margin-left:35px;margin-bottom:var(--s5)">
+          <div class="grid grid-cols-1 sm:grid-cols-3" style="gap:var(--s3)">
+            ${[{n:'Kerala',t:'Backwaters, food, nature',fit:'Strong match',best:true},{n:'Goa',t:'Beaches, food, relaxed',fit:'Good match'},{n:'Karnataka',t:'Heritage, nature, culture',fit:'Good match'}].map(d=>`
+              <div class="card overflow-hidden cursor-pointer ${d.best?'border-accent':''}">
+                <div class="h-24 sm:h-20 overflow-hidden"><img src="https://images.unsplash.com/photo-${d.best?'1602216056096-3b40cc0c9944':'1512343879784-a960bf40e7f2'}?w=300&q=80" class="w-full h-full object-cover" alt="${d.n}"></div>
+                <div style="padding:var(--s3)">
+                  <div class="flex items-center justify-between" style="margin-bottom:2px"><span class="text-[12px] font-semibold" style="color:var(--tx)">${d.n}</span>${d.best?'<span class="text-[9px] text-white px-1.5 py-0.5 rounded-full font-semibold" style="background:var(--accent)">Best fit</span>':''}</div>
+                  <div class="text-[10px]" style="color:var(--tx3)">${d.t}</div>
+                  <div class="text-[10px] font-medium" style="color:var(--success);margin-top:2px">${d.fit}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+        ${chat('user','Kerala sounds perfect. What about the budget?')}
+        ${chat('ai','For 5 relaxed days with mid-range comfort - hotels, activities, food, and transport - I would estimate around '+fmt(45000)+' for two. Backwater experiences, a heritage hotel in Kochi, and a tea plantation stay in Munnar would all fit. Want me to start building a concrete plan?')}
+        <div class="anim" style="margin-left:35px;margin-bottom:var(--s5)">
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="nav('confirmed-brief')" class="flex items-center gap-2 text-white px-4 py-2 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.97]" style="background:var(--accent);min-height:44px"><i data-lucide="arrow-right" style="width:16px;height:16px"></i>Use this idea - start planning</button>
+            <button class="px-4 py-2 rounded-xl text-[13px] font-medium transition-all" style="min-height:44px;border:1px solid var(--line);color:var(--tx2)">Show me other options</button>
+          </div>
+        </div>
+      </div>
+      <div class="chat-bar">
+        <div class="flex gap-2 items-end" style="max-width:680px;margin:0 auto">
+          <div class="flex-1 flex items-center rounded-xl transition-all" style="padding:0 var(--s3);height:44px;background:var(--hoverBg);border:1px solid var(--line)">
+            <input type="text" placeholder="Keep exploring - try 'What about Goa instead?'" class="flex-1 bg-transparent text-[13px] outline-none" style="color:var(--tx)">
+            <button class="p-1" style="color:var(--tx3)"><i data-lucide="mic" style="width:16px;height:16px"></i></button>
+          </div>
+          <button class="text-white px-4 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.97] flex-shrink-0" style="background:var(--accent);min-height:44px;display:flex;align-items:center;justify-content:center"><i data-lucide="send" style="width:16px;height:16px"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="desk-only w-[280px] flex-shrink-0 overflow-y-auto" style="padding:var(--s5);border-left:1px solid var(--line);background:var(--surface)">
+      <div class="text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3);margin-bottom:var(--s3)">Brainstorm Notes</div>
+      <div class="rounded-card" style="padding:var(--s4);margin-bottom:var(--s4);background:var(--accentSoft);border:1px solid var(--accent100)">
+        <div class="text-[11px]" style="color:var(--tx3);margin-bottom:var(--s2)">What you have told me:</div>
+        <div style="display:grid;gap:var(--s2)">
+          ${[['Where','South India, Kerala preferred'],['When','December'],['Who','2 travellers'],['Vibe','Relaxed, food-forward'],['Budget','Mid-range (~'+fmt(45000)+')'],['Must-haves','Backwaters, nature']].map(([l,v])=>`<div class="flex text-[12px]"><span class="font-semibold" style="width:68px;color:var(--tx3)">${l}</span><span style="color:var(--tx)">${v}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="text-[11px] leading-relaxed" style="padding:var(--s3);background:var(--bg);border-radius:var(--radius);color:var(--tx3)">Nothing is locked yet. Pick a direction and tap <strong style="color:var(--tx2)">\"Start planning\"</strong> when ready.</div>
+    </div>
+  </div>`;
+}
+
+function sBrief(){
+  return`<div class="max-w-xl mx-auto page-pad page-enter anim" style="padding:var(--s12) var(--s4)">
+    <div class="text-center" style="margin-bottom:var(--s8)">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto" style="margin-bottom:var(--s3);background:var(--successSoft)"><i data-lucide="check-circle" style="width:24px;height:24px;color:var(--success)"></i></div>
+      <h1 class="text-2xl font-bold" style="color:var(--tx);margin-bottom:var(--s1)">${T('Your trip brief')}</h1>
+      <p class="text-[13px]" style="color:var(--tx3);margin-bottom:var(--s3)">${T('Everything look right?')}</p>
+      <div class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] flex-wrap justify-center" style="background:var(--hoverBg);border:1px solid var(--line);color:var(--tx3)"><i data-lucide="arrow-left" style="width:12px;height:12px"></i><span>From your brainstorm:</span><span class="font-semibold" style="color:var(--tx2)">Kerala, relaxed, food + backwaters, mid-range</span></div>
+    </div>
+    <div class="card overflow-hidden" style="margin-bottom:var(--s5)">
+      <div class="h-40 relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80" class="w-full h-full object-cover" alt="Kerala">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+        <div class="absolute bottom-4 left-5 text-white"><div class="text-2xl font-bold">KERALA</div><div class="text-[13px] opacity-90">15-20 December, 2 travellers</div></div>
+      </div>
+      <div style="padding:var(--card-pad)">
+        <div class="grid grid-cols-3" style="gap:var(--s5);margin-bottom:var(--s5)">
+          <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Budget</div><div class="text-xl font-bold" style="color:var(--accent)">${fmt(45000)}</div><div class="text-[11px]" style="color:var(--tx3)">Mid-range</div></div>
+          <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Pace</div><div class="text-[15px] font-semibold" style="color:var(--tx)">Relaxed</div><div class="text-[11px]" style="color:var(--tx3)">3-4 per day</div></div>
+          <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">From</div><div class="text-[15px] font-semibold" style="color:var(--tx)">Delhi</div><div class="text-[11px]" style="color:var(--tx3)">Direct flights</div></div>
+        </div>
+        <div style="border-top:1px solid var(--line);padding-top:var(--s4);margin-bottom:var(--s4)">
+          <div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:var(--s2)">Interests</div>
+          <div class="flex gap-1.5 flex-wrap">${TRIP.interests.map(i=>`<span class="px-2.5 py-1 rounded-full text-[11px] font-medium" style="background:var(--accentSoft);color:var(--accent)">${i}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 justify-center">
+      <button onclick="nav('ideator')" class="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-all" style="min-height:44px;border:1px solid var(--line);color:var(--tx2)">${T('Edit')}</button>
+      <button onclick="nav('planner')" class="px-6 py-2.5 rounded-xl text-white text-[13px] font-semibold transition-all active:scale-[0.97] flex items-center gap-2" style="background:var(--accent);min-height:44px">${T('Confirm and build my trip')}<i data-lucide="arrow-right" style="width:16px;height:16px"></i></button>
+    </div>
+  </div>`;
+}
+
+function tlItem(item,idx){
+  const cfg={flight:{ic:'plane'},hotel:{ic:'building'},activity:{ic:'map-pin'},transfer:{ic:'car'}};
+  const c=cfg[item.tp]||cfg.activity;
+  return`<div class="relative anim" style="padding-left:40px;padding-bottom:var(--s5);animation-delay:${idx*40}ms">
+    <div class="tl-dot ${idx<2?'done':idx===2?'active':''}"></div>
+    <div class="card" style="padding:var(--card-pad)">
+      <div class="flex items-start justify-between gap-2" style="margin-bottom:var(--s2)">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--accentSoft);color:var(--accent)"><i data-lucide="${c.ic}" style="width:16px;height:16px"></i></div>
+          <div class="min-w-0">
+            <div class="text-[13px] font-semibold truncate" style="color:var(--tx)">${item.n}</div>
+            <div class="text-[11px]" style="color:var(--tx3)">${item.t}${item.e?' - '+item.e:''}${item.d?' · '+item.d:''}</div>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-[13px] font-semibold" style="color:var(--tx)">${item.c>0?fmt(item.c):'Free'}</div>
+          ${bdg(item.st)}
+        </div>
+      </div>
+      ${item.locked?`<div class="badge badge-l" style="margin-bottom:var(--s2)"><i data-lucide="lock" style="width:10px;height:10px"></i>Locked</div>`:''}
+      ${item.why?`<div style="border-top:1px solid var(--line);padding-top:var(--s3)">
+        <button onclick="event.stopPropagation();document.getElementById('w${idx}').classList.toggle('hidden')" class="flex items-center gap-1.5 text-[11px] font-semibold" style="color:var(--gold);min-height:28px"><i data-lucide="sparkles" style="width:12px;height:12px"></i>Why this?</button>
+        <div id="w${idx}" class="hidden" style="margin-top:var(--s2)"><div class="text-[12px] leading-relaxed rounded-xl" style="padding:var(--s3);color:var(--tx3);background:var(--hoverBg)">${item.why}</div></div>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function sPlanner(){
+  const day=ITINERARY[selDay];
+  return`<div class="flex flex-col lg:flex-row overflow-hidden page-enter" style="height:calc(100vh - 56px)">
+    <div class="w-full overflow-y-auto" id="main" style="border-right:1px solid var(--line);background:var(--surface)">
+      <div class="sticky top-0 backdrop-blur z-10" style="padding:var(--s3) var(--s4);background:var(--surface);border-bottom:1px solid var(--line);opacity:0.95">
+        <div class="flex items-center justify-between" style="margin-bottom:var(--s2)">
+          <div><div class="text-[13px] font-semibold" style="color:var(--tx)">${TRIP.name}</div><div class="text-[11px]" style="color:var(--tx3)">15-20 Dec, 2 travellers</div></div>
+          <div class="badge-h flex items-center gap-1"><i data-lucide="shield-check" style="width:12px;height:12px"></i>All checks passed</div>
+        </div>
+        <div class="flex items-center gap-2" style="margin-bottom:var(--s2)">
+          <span class="text-[10px] font-semibold uppercase tracking-wide" style="color:var(--tx3)">Travel</span>
+          <div class="flex gap-0.5 rounded-lg p-0.5" style="background:var(--hoverBg)">
+            ${['Flight','Train','Car','Bus'].map((m,i)=>`<button class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${i===0?'shadow-sm':''}" style="min-height:28px;${i===0?'background:var(--cardBg);color:var(--tx)':'color:var(--tx3)'}">${m}${i>0?'*':''}</button>`).join('')}
+          </div>
+          <span class="text-[9px]" style="color:var(--tx3)">* estimated</span>
+        </div>
+      </div>
+      <div class="flex gap-1 overflow-x-auto" style="padding:var(--s2) var(--s4);border-bottom:1px solid var(--line);background:var(--bg)">
+        ${ITINERARY.map((d,i)=>`<button onclick="selDay=${i};render()" class="px-3 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all" style="min-height:28px;${selDay===i?'background:var(--accent);color:#fff':'color:var(--tx3)'}">Day ${d.day}</button>`).join('')}
+      </div>
+      <div style="padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);background:var(--accentSoft);opacity:0.5">
+        <div class="flex items-center justify-between">
+          <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3)">Day ${day.day}</div><div class="text-[14px] font-semibold" style="color:var(--tx)">${day.title}</div><div class="text-[11px]" style="color:var(--tx3)">${day.date} · ${day.city}</div></div>
+          <div class="text-right"><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3)">Day total</div><div class="text-lg font-bold budget-num" style="color:var(--accent)">${fmt(day.total)}</div></div>
+        </div>
+      </div>
+      <div class="relative" style="padding:var(--s4)">
+        <div class="tl-spine"></div>
+        ${day.items.map((it,i)=>tlItem(it,i)).join('')}
+      </div>
+      <!-- Diff view panel -->
+      ${showDiff?`<div class="anim" style="margin:0 var(--s4) var(--s4);padding:var(--s4);border-radius:var(--radius);background:var(--accentSoft);border:1px solid var(--accent100)">
+        <div class="text-[12px] font-semibold" style="color:var(--tx);margin-bottom:var(--s3)"><i data-lucide="git-compare" style="width:14px;height:14px;display:inline;vertical-align:-2px"></i> Change Preview</div>
+        <div class="flex flex-col gap-2" style="margin-bottom:var(--s3)">
+          <div class="diff-removed"><span class="text-[12px]" style="color:var(--error)">Before:</span> <span class="text-[12px]">Cab to Alleppey - ${fmt(650)}</span></div>
+          <div class="diff-added"><span class="text-[12px]" style="color:var(--success)">After:</span> <span class="text-[12px]">Ferry to Alleppey - ${fmt(300)}</span></div>
+        </div>
+        <div class="flex items-center justify-between" style="margin-bottom:var(--s3)"><span class="text-[12px]" style="color:var(--tx3)">Day 2 impact</span><span class="diff-budget" style="color:var(--success)">-${fmt(350)}</span></div>
+        <div class="flex items-center justify-between" style="margin-bottom:var(--s4)"><span class="text-[12px]" style="color:var(--tx3)">Trip total</span><span class="diff-budget" style="color:var(--success)">${fmt(TRIP.used)} <span style="font-size:11px">(-${fmt(350)})</span></span></div>
+        <div class="flex gap-2">
+          <button onclick="showDiff=false;render();toast('Changes applied')" class="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-[0.97]" style="background:var(--accent);min-height:40px">Apply changes</button>
+          <button onclick="showDiff=false;render()" class="px-4 py-2 rounded-xl text-[12px] font-medium transition-all" style="min-height:40px;border:1px solid var(--line);color:var(--tx2)">Cancel</button>
+        </div>
+      </div>`:''}
+    </div>
+    <div class="desk-only flex flex-col overflow-hidden" style="width:45%">
+      <div class="map-bg flex-1 relative">
+        <svg class="absolute inset-0 w-full h-full z-[5]" viewBox="0 0 600 400" preserveAspectRatio="none">
+          <path d="M 80 100 Q 200 180 320 200 Q 440 220 520 140" stroke="var(--accent)" stroke-width="2" fill="none" stroke-dasharray="6 4" opacity=".4"/>
+          <circle cx="80" cy="100" r="6" fill="var(--accent)" opacity=".7"/><circle cx="320" cy="200" r="6" fill="var(--accent)" opacity=".7"/><circle cx="520" cy="140" r="6" fill="var(--accent)" opacity=".7"/>
+        </svg>
+        <div class="absolute inset-0 z-10 flex items-center justify-center p-6">
+          <div class="rounded-card shadow-card text-center backdrop-blur" style="padding:var(--s5);max-width:260px;background:var(--cardBg);border:1px solid var(--cardBorder)">
+            <div class="text-[15px] font-semibold" style="color:var(--tx);margin-bottom:var(--s2)">Day ${day.day} Route</div>
+            <div class="text-[12px]" style="color:var(--tx3);margin-bottom:var(--s3)">${day.items.filter(i=>i.tp==='activity').length} activities across ${day.city}</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:var(--s3);border-top:1px solid var(--line);background:var(--surface)">
+        <div class="text-[10px] font-semibold uppercase tracking-widest" style="color:var(--tx3);margin-bottom:var(--s2)">AI Assistant</div>
+        <div class="rounded-xl text-[12px] leading-relaxed" style="padding:var(--s3);margin-bottom:var(--s2);background:var(--accentSoft);color:var(--tx)">Your Day ${day.day} in ${day.city} is well-optimized. Want to make changes?</div>
+        <div class="flex gap-2">
+          <input type="text" id="aiInput" placeholder="Try: 'make Day 2 cheaper'" class="flex-1 rounded-lg px-3 py-2 text-[12px] outline-none transition-all" style="height:40px;background:var(--hoverBg);border:1px solid var(--line);color:var(--tx)" onkeydown="if(event.key==='Enter'){showDiff=true;render()}">
+          <button onclick="showDiff=true;render()" class="text-white px-3 rounded-lg text-[12px] font-medium transition-all" style="min-width:40px;background:var(--accent);display:flex;align-items:center;justify-content:center"><i data-lucide="send" style="width:14px;height:14px"></i></button>
+        </div>
+      </div>
+      <div style="padding:var(--s3);border-top:1px solid var(--line);background:var(--surface)">
+        <div class="flex items-center justify-between" style="margin-bottom:var(--s1)"><span class="text-[10px] uppercase tracking-wide font-semibold" style="color:var(--tx3)">Trip Budget</span><span class="text-[11px] font-semibold" style="color:var(--tx)">${fmt(TRIP.used)} / ${fmt(TRIP.budget)}</span></div>
+        <div class="h-1.5 rounded-full overflow-hidden" style="background:var(--line)"><div class="h-full rounded-full transition-all duration-700" style="width:${(TRIP.used/TRIP.budget*100).toFixed(0)}%;background:var(--success)"></div></div>
+        <div class="text-[10px] font-medium" style="color:var(--success);margin-top:2px">${fmt(TRIP.remaining)} remaining</div>
+      </div>
+    </div>
+    <!-- Mobile: floating map button -->
+    <button onclick="toggleMapModal()" class="lg:hidden fixed z-30 flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-[12px] font-semibold shadow-elevated transition-all active:scale-[0.97]" style="bottom:70px;right:16px;background:var(--accent);min-height:44px"><i data-lucide="map" style="width:16px;height:16px"></i>Map</button>
+    <!-- Mobile map modal -->
+    <div id="mapModal" class="mob-map-modal">
+      <div class="sticky top-0 flex items-center justify-between px-4 h-12 z-10" style="background:var(--surface);border-bottom:1px solid var(--line)">
+        <span class="text-[13px] font-semibold" style="color:var(--tx)">Day ${day.day} Map</span>
+        <button onclick="toggleMapModal()" class="p-2 rounded-lg" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--tx3)"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+      </div>
+      <div class="map-bg" style="height:calc(100vh - 48px)">
+        <svg class="absolute inset-0 w-full h-full z-[5]" viewBox="0 0 600 400" preserveAspectRatio="none">
+          <path d="M 80 100 Q 200 180 320 200 Q 440 220 520 140" stroke="var(--accent)" stroke-width="2" fill="none" stroke-dasharray="6 4" opacity=".6"/>
+          <circle cx="80" cy="100" r="8" fill="var(--accent)"/><circle cx="320" cy="200" r="8" fill="var(--accent)"/><circle cx="520" cy="140" r="8" fill="var(--accent)"/>
+          <text x="80" y="85" fill="var(--tx)" font-size="11" text-anchor="middle" font-weight="600">Start</text>
+          <text x="320" y="185" fill="var(--tx)" font-size="11" text-anchor="middle" font-weight="600">Day ${day.day}</text>
+          <text x="520" y="125" fill="var(--tx)" font-size="11" text-anchor="middle" font-weight="600">End</text>
+        </svg>
+      </div>
+    </div>
+  </div>`;
+}
+
+function sFlights(){
+  return`<div class="max-w-3xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <div style="margin-bottom:var(--s5)"><h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:2px">${T('Select flights')}</h2><p class="text-[13px]" style="color:var(--tx3)">Delhi to Kochi, 15 December</p></div>
+    <div class="flex gap-2" style="margin-bottom:var(--s4)">${['Cheapest','Fastest','Best value'].map((s,i)=>`<button class="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all" style="min-height:32px;${i===0?'background:var(--accent);color:#fff;border:1px solid var(--accent)':'border:1px solid var(--line);color:var(--tx3)'}">${s}</button>`).join('')}</div>
+    <div style="display:grid;gap:var(--s3)">
+      ${FLIGHTS.filter(f=>f.from==='DEL').map((f,i)=>`
+        <div class="card anim ${i===0?'border-accent shadow-card':''}" style="padding:var(--card-pad);animation-delay:${i*40}ms">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-3" style="margin-bottom:var(--s2)">
+                <div><div class="text-[12px]" style="color:var(--tx3)">${f.air}</div><div class="text-[11px]" style="color:var(--tx3)">${f.no}</div></div>
+                <div class="flex-1 flex items-center gap-2">
+                  <div class="text-[15px] font-semibold" style="color:var(--tx)">${f.dep}</div>
+                  <div class="flex-1"><div style="height:1px;background:var(--line)"></div><div class="text-[10px] text-center" style="color:var(--tx3);margin-top:2px">${f.dur}${f.stops===0?' · Non-stop':''}</div></div>
+                  <div class="text-[15px] font-semibold" style="color:var(--tx)">${f.arr}</div>
+                </div>
+                <div class="text-right"><div class="text-[15px] font-semibold" style="color:var(--accent)">${fmt(f.fare)}</div><div class="text-[10px]" style="color:var(--tx3)">incl. tax</div></div>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] flex-wrap" style="color:var(--tx3)">
+                <span>${f.cabin} · ${f.bag}</span><span>${f.ref?'Refundable':'Non-refundable'}</span>${bdg(f.st)}
+              </div>
+            </div>
+            <button onclick="toast('Flight ${f.no} selected')" class="px-4 py-2 rounded-xl text-[12px] font-semibold transition-all active:scale-[0.97] flex-shrink-0" style="min-height:44px;${i===0?'background:var(--accent);color:#fff':'border:1px solid var(--line);color:var(--tx2)'}">Select</button>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function sHotels(){
+  return`<div class="max-w-4xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <div style="margin-bottom:var(--s5)"><h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:2px">${T('Choose your stay')}</h2><p class="text-[13px]" style="color:var(--tx3)">Kochi, 15-17 Dec, 2 nights</p></div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3" style="gap:var(--s4)">
+      ${HOTELS.map((h,i)=>`
+        <div class="card anim overflow-hidden ${i===0?'border-accent shadow-card':''}" style="animation-delay:${i*40}ms">
+          <div class="h-36 relative overflow-hidden">
+            <img src="https://images.unsplash.com/photo-${['1566073771259-6a8506099945','1582719508461-905c673771fd','1551882547-ff40c63fe5fa'][i]}?w=500&q=80" class="w-full h-full object-cover" alt="${h.name}">
+            ${i===0?'<span class="absolute top-2 left-2 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background:var(--accent)">AI Pick</span>':''}
+            <span class="absolute top-2 right-2">${bdg(h.st)}</span>
+          </div>
+          <div style="padding:var(--card-pad)">
+            <div class="flex items-center justify-between" style="margin-bottom:2px"><span class="text-[13px] font-semibold" style="color:var(--tx)">${h.name}</span><span class="text-[11px]" style="color:var(--tx3)">${'★'.repeat(h.stars)}</span></div>
+            <div class="text-[11px]" style="color:var(--tx3);margin-bottom:var(--s2)">${h.type} · ${h.loc}</div>
+            <div class="flex items-center gap-2" style="margin-bottom:var(--s3)">
+              <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background:var(--accentSoft);color:var(--accent)">${h.score}</span>
+              <span class="text-[11px]" style="color:var(--tx3)">${h.rev} reviews</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><span class="text-[15px] font-semibold" style="color:var(--tx)">${fmt(h.price)}</span><span class="text-[11px]" style="color:var(--tx3)">/night</span></div>
+              <button onclick="toast('${h.name} selected')" class="px-3 py-2 rounded-xl text-[12px] font-semibold transition-all active:scale-[0.97]" style="min-height:44px;${i===0?'background:var(--accent);color:#fff':'border:1px solid var(--line);color:var(--tx2)'}">Choose</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function sActivities(){
+  const acts=[{n:'Backwater boat ride',cat:'Nature',d:'3h',c:800,city:'Alleppey'},{n:'Kerala cooking class',cat:'Food',d:'3h',c:600,city:'Alleppey'},{n:'Tea plantation walk',cat:'Nature',d:'2h',c:150,city:'Munnar'},{n:'Kathakali performance',cat:'Culture',d:'2h',c:350,city:'Kochi'},{n:'Spice plantation tour',cat:'Heritage',d:'2h',c:200,city:'Thekkady'},{n:'Canoe through villages',cat:'Nature',d:'1.5h',c:350,city:'Alleppey'}];
+  return`<div class="max-w-5xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <div style="margin-bottom:var(--s5)"><h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:2px">${T('Discover activities')}</h2><p class="text-[13px]" style="color:var(--tx3)">Experiences matching your interests in Kerala</p></div>
+    <div class="flex gap-1.5 flex-wrap" style="margin-bottom:var(--s4)">${['Nature','Food','Heritage','Culture','Beach','Wellness'].map(c=>`<button class="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all" style="min-height:32px;border:1px solid var(--line);color:var(--tx3)">${c}</button>`).join('')}</div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3" style="gap:var(--s3)">
+      ${acts.map((a,i)=>`
+        <div class="card overflow-hidden anim" style="animation-delay:${i*40}ms">
+          <div class="h-28 overflow-hidden"><img src="https://images.unsplash.com/photo-${['1602216056096-3b40cc0c9944','1514933651103-005eec06c04b','1506905925346-21bda4d32df4','1576769865392-82c8d0f1b0f0','1514933651103-005eec06c04b','1602216056096-3b40cc0c9944'][i]}?w=400&q=80" class="w-full h-full object-cover" alt="${a.n}"></div>
+          <div style="padding:var(--card-pad)">
+            <div class="flex items-center justify-between" style="margin-bottom:2px"><span class="text-[13px] font-semibold" style="color:var(--tx)">${a.n}</span><span class="text-[10px] px-1.5 py-0.5 rounded font-medium" style="background:var(--accentSoft);color:var(--accent)">${a.cat}</span></div>
+            <div class="text-[11px]" style="color:var(--tx3);margin-bottom:var(--s3)">${a.d} · ${fmt(a.c)} · ${a.city}</div>
+            <button onclick="toast('${a.n} added')" class="w-full text-white py-2 rounded-xl text-[12px] font-semibold transition-all active:scale-[0.97]" style="background:var(--accent);min-height:40px">Add to trip</button>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function sBudget(){
+  const pct=(TRIP.used/TRIP.budget*100).toFixed(0);
+  return`<div class="max-w-2xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:var(--s5)">${T('Trip Budget')}</h2>
+    <div class="card anim" style="padding:var(--s5);margin-bottom:var(--s5)">
+      <div class="grid grid-cols-3 text-center" style="gap:var(--s4);margin-bottom:var(--s4)">
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Total Estimate</div><div class="text-2xl font-bold budget-num" style="color:var(--tx)">${fmt(TRIP.used)}</div></div>
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Budget</div><div class="text-2xl font-bold" style="color:var(--tx)">${fmt(TRIP.budget)}</div></div>
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Remaining</div><div class="text-2xl font-bold budget-num" style="color:var(--success)">${fmt(TRIP.remaining)}</div></div>
+      </div>
+      <div class="h-3 rounded-full overflow-hidden" style="margin-bottom:var(--s2);background:var(--line)"><div class="h-full rounded-full transition-all duration-1000" style="width:${pct}%;background:var(--success)"></div></div>
+      <div class="flex items-center justify-between"><span class="text-[12px]" style="color:var(--tx3)">${pct}% used</span><span class="badge badge-v">${fmt(TRIP.remaining)} under budget</span></div>
+    </div>
+    <h3 class="text-[14px] font-semibold" style="color:var(--tx);margin-bottom:var(--s3)">Category Breakdown</h3>
+    <div style="display:grid;gap:var(--s2)">
+      ${BUDGET_CATS.map(c=>`
+        <div class="card anim" style="padding:var(--s4);display:flex;align-items:center;gap:var(--s3)">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--accentSoft)"><i data-lucide="${c.ic}" style="width:18px;height:18px;color:var(--accent)"></i></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between" style="margin-bottom:var(--s1)"><span class="text-[13px] font-medium" style="color:var(--tx)">${c.n}</span><span class="text-[13px] font-semibold" style="color:var(--tx)">${fmt(c.a)}</span></div>
+            <div class="h-1 rounded-full overflow-hidden" style="background:var(--line)"><div class="h-full rounded-full" style="width:${(c.a/TRIP.used*100).toFixed(0)}%;background:var(--accent);opacity:0.6"></div></div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function sCalendar(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  return`<div class="max-w-3xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:2px">December 2026</h2>
+    <p class="text-[13px]" style="color:var(--tx3);margin-bottom:var(--s4)">${T('Calendar')}</p>
+    <div class="card overflow-hidden">
+      <div class="grid grid-cols-7">${days.map(d=>`<div class="py-2 text-center text-[10px] font-semibold uppercase tracking-wider" style="color:var(--tx3);border-bottom:1px solid var(--line)">${d}</div>`).join('')}
+        ${Array.from({length:2}).map(()=>`<div style="min-height:48px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)"></div>`).join('')}
+        ${Array.from({length:31}).map((_,i)=>{const d=i+1;const t=d>=15&&d<=20;return`<div style="min-height:48px;padding:var(--s1);border-bottom:1px solid var(--line);border-right:1px solid var(--line);${t?'background:var(--accentSoft)':''}"><div class="text-[12px] font-medium" style="color:${t?'var(--accent)':'var(--tx2)'}">${d}</div>${t?`<div class="text-[9px] text-white px-1 py-0.5 rounded inline-block font-medium" style="margin-top:1px;background:var(--accent)">Day ${d-14}</div>`:''}</div>`}).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function sChecklist(){
+  const total=checklistState.reduce((a,s)=>a+s.items.length,0);
+  const done=checklistState.reduce((a,s)=>a+s.items.filter(i=>i.done).length,0);
+  return`<div class="flex flex-col lg:flex-row page-enter" style="height:calc(100vh - 56px)">
+    <div class="flex-1 overflow-y-auto page-pad" style="padding:var(--s4)" id="main">
+      <div style="margin-bottom:var(--s4)">
+        <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:2px">${T('Checklist')}</h2>
+        <div class="flex items-center gap-2 text-[11px]" style="color:var(--tx3)"><i data-lucide="sparkles" style="width:12px;height:12px;color:var(--gold)"></i>Generated from your itinerary - updates automatically</div>
+      </div>
+      <div class="flex items-center gap-3" style="margin-bottom:var(--s4)">
+        <div class="h-2 flex-1 rounded-full overflow-hidden" style="background:var(--line)"><div class="h-full rounded-full transition-all duration-500" style="width:${(done/total*100).toFixed(0)}%;background:var(--accent)"></div></div>
+        <span class="text-[12px] font-semibold" style="color:var(--tx)">${done}/${total}</span>
+      </div>
+      ${checklistState.map((sec,si)=>`
+        <div class="card" style="margin-bottom:var(--s3)">
+          <div class="flex items-center justify-between" style="padding:var(--s3) var(--card-pad);border-bottom:1px solid var(--line)"><span class="text-[13px] font-semibold" style="color:var(--tx)">${sec.s}</span><span class="text-[11px]" style="color:var(--tx3)">${sec.items.filter(i=>i.done).length}/${sec.items.length}</span></div>
+          <div style="padding:var(--s2) var(--card-pad)">
+            ${sec.items.map((it,ii)=>`<label class="flex items-center gap-3 py-2 px-1 cursor-pointer rounded-lg transition-all" style="min-height:44px"><input type="checkbox" ${it.done?'checked':''} onchange="toggleCheck(${si},${ii})" class="w-4 h-4 rounded accent-accent"><div class="flex-1 min-w-0"><span class="text-[13px]" style="color:${it.done?'var(--tx3)':'var(--tx2)'};${it.done?'text-decoration:line-through':''}">${it.n}</span>${it.ai?'<div class="text-[10px]" style="color:var(--tx3);margin-top:1px">Added by AI after your last edit</div>':''}</div></label>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+<div style="display:none">
+      <div class="flex gap-2 items-center">
+        <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--accent)"><i data-lucide="triangle" style="width:12px;height:12px;color:#fff"></i></div>
+        <div class="flex-1 flex items-center rounded-xl" style="padding:0 var(--s3);height:44px;background:var(--hoverBg);border:1px solid var(--line)">
+          <input type="text" placeholder="Update checklist..." class="flex-1 bg-transparent text-[12px] outline-none" style="color:var(--tx);height:38px;line-height:38px">
+          <button style="color:var(--tx3)"><i data-lucide="mic" style="width:16px;height:16px"></i></button>
+        </div>
+        <button class="text-white px-3 rounded-xl text-[12px] font-semibold transition-all active:scale-[0.97] flex-shrink-0" style="background:var(--accent);min-height:44px;display:flex;align-items:center;justify-content:center"><i data-lucide="send" style="width:14px;height:14px"></i></button>
+      </div>
+    </div>
+    <div class="cl-chat-panel flex-shrink-0 flex flex-col" style="width:340px;border-left:1px solid var(--line);background:var(--surface)">
+      <div style="padding:var(--s3) var(--s4);border-bottom:1px solid var(--line)">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:var(--accent)"><i data-lucide="triangle" style="width:12px;height:12px;color:#fff"></i></div>
+          <div><div class="text-[12px] font-semibold" style="color:var(--tx)">SmartTrip AI</div><div class="text-[10px]" style="color:var(--tx3)">Update your checklist with a message</div></div>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto" style="padding:var(--s4)" id="cl-chat">
+        ${chat('ai','I generated this checklist from your Kerala itinerary. Ask me to update it.')}
+        ${chat('user','Check off the Fort Heritage hotel booking')}
+        ${chat('ai','Done. I have marked "Fort Heritage hotel booking" as completed. Progress is now '+Math.min(done+1,total)+'/'+total+'.')}
+      </div>
+      <div style="padding:var(--s3) var(--s4);border-top:1px solid var(--line)">
+        <div class="flex gap-2 items-end">
+          <div class="flex-1 flex items-center rounded-xl transition-all" style="padding:0 var(--s3);height:44px;background:var(--hoverBg);border:1px solid var(--line)">
+            <input type="text" placeholder="Update checklist..." class="flex-1 bg-transparent text-[12px] outline-none" style="color:var(--tx);height:38px;line-height:38px">
+            <button style="color:var(--tx3)"><i data-lucide="mic" style="width:16px;height:16px"></i></button>
+          </div>
+          <button class="text-white px-3 rounded-xl text-[12px] font-semibold transition-all active:scale-[0.97] flex-shrink-0" style="background:var(--accent);min-height:44px;display:flex;align-items:center;justify-content:center"><i data-lucide="send" style="width:14px;height:14px"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleCheck(si,ii){checklistState[si].items[ii].done=!checklistState[si].items[ii].done;render()}
+
+function sTripMode(){
+  const day=ITINERARY[1];
+  return`<div class="max-w-lg mx-auto page-pad page-enter" style="padding:var(--s5) var(--s4)">
+    <div class="text-center anim" style="margin-bottom:var(--s5)">
+      <span class="badge badge-v" style="margin-bottom:var(--s2)"><i data-lucide="navigation" style="width:12px;height:12px"></i>Trip Mode</span>
+      <h2 class="text-2xl font-bold" style="color:var(--tx);margin-bottom:2px">Day ${day.day}</h2>
+      <p class="text-[13px]" style="color:var(--tx3)">${day.date} · ${day.title}</p>
+    </div>
+    <div class="text-center" style="margin-bottom:var(--s5)">
+      <div class="text-[12px]" style="color:var(--tx3);margin-bottom:var(--s2)">42% completed - 5 of 12 activities</div>
+      <div class="h-1.5 rounded-full overflow-hidden mx-auto" style="max-width:180px;background:var(--line)"><div class="h-full rounded-full" style="width:42%;background:var(--success)"></div></div>
+    </div>
+    <div style="display:grid;gap:var(--s2)">
+      ${day.items.map((it,idx)=>{
+        const done=idx<2,active=idx===2;
+        return`<div class="flex items-center gap-3 anim ${active?'rounded-xl':'rounded-xl'} ${done?'opacity-50':''}" style="padding:var(--s3);min-height:52px;animation-delay:${idx*40}ms;${active?'background:var(--accentSoft);border:2px solid var(--accent)':'background:var(--cardBg);border:1px solid var(--cardBorder)'}">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0" style="${done?'background:var(--successSoft);color:var(--success)':'background:var(--hoverBg);color:var(--tx3)'}">${done?'<i data-lucide="check" style="width:16px;height:16px"></i>':idx+1}</div>
+          <div class="flex-1 min-w-0"><div class="text-[13px] font-medium truncate" style="color:var(--tx);${done?'text-decoration:line-through':''}">${it.n}</div><div class="text-[11px]" style="color:var(--tx3)">${it.t}</div></div>
+          ${active?'<span class="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:var(--accent)">NOW</span>':''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function sCart(){
+  return`<div class="max-w-2xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:var(--s5)">${T('Your Trip Cart')}</h2>
+    <div class="card" style="margin-bottom:var(--s3)">
+      <div class="flex items-center gap-2" style="padding:var(--s3) var(--card-pad);border-bottom:1px solid var(--line)"><i data-lucide="plane" style="width:16px;height:16px;color:var(--accent)"></i><span class="text-[13px] font-semibold" style="color:var(--tx)">Flights</span><span class="text-[11px] ml-auto" style="color:var(--tx3)">2 items</span></div>
+      ${FLIGHTS.filter(f=>f.from==='DEL'||f.from==='COK').slice(0,2).map(f=>`<div class="flex items-center justify-between" style="padding:var(--s3) var(--card-pad);border-bottom:1px solid var(--line)"><div><div class="text-[13px] font-medium" style="color:var(--tx)">${f.from} to ${f.to}</div><div class="text-[11px]" style="color:var(--tx3)">${f.air} ${f.no} · ${f.dep}</div></div><div class="text-right"><div class="text-[13px] font-semibold" style="color:var(--tx)">${fmt(f.fare)}</div>${bdg(f.st)}</div></div>`).join('')}
+    </div>
+    <div class="card" style="margin-bottom:var(--s3)">
+      <div class="flex items-center gap-2" style="padding:var(--s3) var(--card-pad);border-bottom:1px solid var(--line)"><i data-lucide="building" style="width:16px;height:16px;color:var(--accent)"></i><span class="text-[13px] font-semibold" style="color:var(--tx)">Hotels</span><span class="text-[11px] ml-auto" style="color:var(--tx3)">3 nights</span></div>
+      ${HOTELS.map(h=>`<div class="flex items-center justify-between" style="padding:var(--s3) var(--card-pad);border-bottom:1px solid var(--line)"><div><div class="text-[13px] font-medium" style="color:var(--tx)">${h.name}</div><div class="text-[11px]" style="color:var(--tx3)">${h.loc}</div></div><div class="text-[13px] font-semibold" style="color:var(--tx)">${fmt(h.price)}/n</div></div>`).join('')}
+    </div>
+    <div class="card" style="padding:var(--card-pad)">
+      <div class="flex items-center justify-between" style="margin-bottom:var(--s2)"><span class="text-[13px]" style="color:var(--tx3)">Subtotal</span><span class="text-[13px] font-medium" style="color:var(--tx)">${fmt(TRIP.used-200)}</span></div>
+      <div class="flex items-center justify-between" style="margin-bottom:var(--s3)"><span class="text-[13px]" style="color:var(--tx3)">Taxes & fees</span><span class="text-[13px] font-medium" style="color:var(--tx)">${fmt(200)}</span></div>
+      <div style="border-top:1px solid var(--line);padding-top:var(--s3);margin-bottom:var(--s4)" class="flex items-center justify-between"><span class="text-[14px] font-semibold" style="color:var(--tx)">Total</span><span class="text-xl font-bold" style="color:var(--accent)">${fmt(TRIP.used)}</span></div>
+      <button onclick="toast('Booking confirmed!')" class="w-full text-white py-3 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.97]" style="background:var(--accent);min-height:44px">${T('Continue to booking')}</button>
+      <div class="text-[11px] text-center" style="color:var(--tx3);margin-top:var(--s2)">Prototype checkout, no real payment</div>
+    </div>
+  </div>`;
+}
+
+function sProfile(){
+  return`<div class="max-w-xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:var(--s5)">${T('Profile')}</h2>
+    <div class="card" style="padding:var(--card-pad);margin-bottom:var(--s3)">
+      <div class="flex items-center gap-3" style="margin-bottom:var(--s5)">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold" style="background:var(--accentSoft);color:var(--accent)">PS</div>
+        <div><div class="text-[15px] font-semibold" style="color:var(--tx)">Priya Sharma</div><div class="text-[13px]" style="color:var(--tx3)">Comfort-seeking explorer</div></div>
+      </div>
+      <div class="grid grid-cols-2 text-[13px]" style="gap:var(--s4)">
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Home City</div><div class="font-medium" style="color:var(--tx)">Delhi</div></div>
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Currency</div><div class="font-medium" style="color:var(--tx)">INR</div></div>
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Budget Band</div><div class="font-medium" style="color:var(--tx)">Mid-range</div></div>
+        <div><div class="text-[10px] uppercase tracking-wide" style="color:var(--tx3);margin-bottom:2px">Style</div><div class="font-medium" style="color:var(--tx)">Food & Nature</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function sSettings(){
+  return`<div class="max-w-xl mx-auto page-pad page-enter" style="padding:var(--s6) var(--s4)">
+    <h2 class="text-xl font-bold" style="color:var(--tx);margin-bottom:var(--s5)">${T('Settings')}</h2>
+    <div class="card" style="padding:var(--card-pad);margin-bottom:var(--s3)">
+      <div class="text-[13px] font-semibold" style="color:var(--tx);margin-bottom:var(--s3)">${T('Theme')}</div>
+      <div class="flex gap-2">
+        <button onclick="darkMode=false;document.documentElement.classList.remove('dark');render()" class="flex-1 flex items-center justify-center gap-2 rounded-xl text-[13px] font-medium transition-all" style="min-height:44px;${!darkMode?'background:var(--accentSoft);border:2px solid var(--accent);color:var(--accent)':'border:1px solid var(--line);color:var(--tx3)'}"><i data-lucide="sun" style="width:16px;height:16px"></i>${T('Light')}</button>
+        <button onclick="darkMode=true;document.documentElement.classList.add('dark');render()" class="flex-1 flex items-center justify-center gap-2 rounded-xl text-[13px] font-medium transition-all" style="min-height:44px;${darkMode?'background:var(--accentSoft);border:2px solid var(--accent);color:var(--accent)':'border:1px solid var(--line);color:var(--tx3)'}"><i data-lucide="moon" style="width:16px;height:16px"></i>${T('Dark')}</button>
+      </div>
+    </div>
+    <div class="card" style="padding:var(--card-pad);margin-bottom:var(--s3)">
+      <div class="text-[13px] font-semibold" style="color:var(--tx);margin-bottom:var(--s3)">Language</div>
+      <div class="grid grid-cols-2" style="gap:var(--s2)">
+        ${[{c:'en',n:'English'},{c:'hi',n:'Hindi'},{c:'ta',n:'Tamil'},{c:'te',n:'Telugu'},{c:'kn',n:'Kannada'},{c:'ml',n:'Malayalam'}].map(l=>`<label class="flex items-center gap-2 rounded-xl cursor-pointer transition-all" style="padding:var(--s3);min-height:44px;${l.c===lang?'border:2px solid var(--accent);background:var(--accentSoft)':'border:1px solid var(--line)'}"><input type="radio" name="lang" ${l.c===lang?'checked':''} class="accent-accent" onchange="setLang('${l.c}')"><span class="text-[13px] font-medium" style="color:var(--tx2)">${l.n}</span></label>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== RENDER =====
+function render(){
+  const map={home:sHome,ideator:sIdeator,'confirmed-brief':sBrief,planner:sPlanner,flights:sFlights,hotels:sHotels,activities:sActivities,budget:sBudget,calendar:sCalendar,checklist:sChecklist,'trip-mode':sTripMode,cart:sCart,profile:sProfile,settings:sSettings};
+  const fn=map[scr]||sHome;
+  document.getElementById('app').innerHTML=`
+  <div class="flex h-screen overflow-hidden" style="background:var(--bg)">
+    ${renderSidebar()}
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      ${renderTopbar()}
+      <div class="flex-1 overflow-y-auto" id="main" style="${scr==='checklist'?'padding-bottom:120px':''}">${fn()}</div>
+    </div>
+  </div>
+
+  ${renderMobNav()}
+  ${renderMobSidebar()}`;
+  if(typeof lucide!=='undefined')lucide.createIcons();
+}
+
+// Apply saved theme
+if(darkMode)document.documentElement.classList.add('dark');
+render();
+</script>
+</body>
+</html>
