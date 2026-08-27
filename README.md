@@ -578,11 +578,11 @@ The user should feel that the system understands both:
 
 ## Team
 
-| Name | Role |
-|---|---|
-| **Saquib S N** | AI and Orchestration Lead |
-| **Sharan S** | Backend and Data Architect |
-| **Sarthak T** | Frontend and State Engineer |
+| Name |
+|---|
+| **Saquib S N** |
+| **Sharan S** |
+| **Sarthak T** |
 
 Built for the **KogniVera Hackathon 2026**.
 
